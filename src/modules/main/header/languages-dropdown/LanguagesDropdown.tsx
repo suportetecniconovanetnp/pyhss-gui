@@ -25,14 +25,14 @@ export const StyledDropdown = styled(PfDropdown)`
 
 export interface Language {
   key: string;
-  icon: string;
+  flag: string;
   label: string;
 }
 
 const languages: Language[] = [
   {
     key: 'en',
-    icon: 'flag-icon-us',
+    flag: 'US',
     label: 'header.language.english'
   }
 ];
@@ -66,7 +66,7 @@ const LanguagesDropdown = () => {
   return (
     <StyledDropdown isOpen={dropdownOpen} hideArrow>
       <div className="nav-link" slot="button">
-        <i className={`flag-icon ${getCurrentLanguage().icon}`} />
+        <span aria-hidden="true">{getCurrentLanguage().flag}</span>
       </div>
       <div slot="menu">
         {languages.map((language) => (
@@ -79,7 +79,7 @@ const LanguagesDropdown = () => {
               setDropdownOpen(false);
             }}
           >
-            <i className={`flag-icon ${language.icon} mr-2`} />
+            <span aria-hidden="true" className="mr-2">{language.flag}</span>
             <span>{t<string>(language.label)}</span>
           </button>
         ))}

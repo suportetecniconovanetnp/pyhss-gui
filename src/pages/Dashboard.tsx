@@ -5,6 +5,13 @@ import {NavLink} from 'react-router-dom';
 import i18n from '@app/utils/i18n';
 import {OamApi} from "../services/pyhss";
 import {DiameterPeer} from '@app/types/pyhss';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {
+  faArrowCircleRight,
+  faChartBar,
+  faChartPie,
+  faUserPlus,
+} from '@fortawesome/free-solid-svg-icons';
 
 const Dashboard = () => {
   const [subs, setSubs] = React.useState("0");
@@ -57,10 +64,10 @@ const Dashboard = () => {
                   <p>{i18n.t('dashboard.subscriberHeader')}</p>
                 </div>
                 <div className="icon">
-                  <i className="ion ion-stats-bars" />
+                  <FontAwesomeIcon icon={faChartBar} />
                 </div>
                 <NavLink to="/subscriber" className="small-box-footer">
-                  {i18n.t('generic.moreInfo')} <i className="fas fa-arrow-circle-right" />
+                  {i18n.t('generic.moreInfo')} <FontAwesomeIcon icon={faArrowCircleRight} />
                 </NavLink>
               </div>
             </div>
@@ -73,10 +80,10 @@ const Dashboard = () => {
                   <p>{i18n.t('dashboard.imsSubscriberHeader')}</p>
                 </div>
                 <div className="icon">
-                  <i className="ion ion-person-add" />
+                  <FontAwesomeIcon icon={faUserPlus} />
                 </div>
                 <NavLink to="/imssubscriber" className="small-box-footer">
-                  {i18n.t('generic.moreInfo')} <i className="fas fa-arrow-circle-right" />
+                  {i18n.t('generic.moreInfo')} <FontAwesomeIcon icon={faArrowCircleRight} />
                 </NavLink>
               </div>
             </div>
@@ -89,7 +96,7 @@ const Dashboard = () => {
                   <p>{i18n.t('dashboard.subscribersPCRFHeader')}</p>
                 </div>
                 <div className="icon">
-                  <i className="ion ion-pie-graph" />
+                  <FontAwesomeIcon icon={faChartPie} />
                 </div>
               </div>
             </div>
@@ -102,7 +109,7 @@ const Dashboard = () => {
                   <p>{i18n.t('dashboard.diameterPeersHeader')}</p>
                 </div>
                 <div className="icon">
-                  <i className="ion ion-pie-graph" />
+                  <FontAwesomeIcon icon={faChartPie} />
                 </div>
               </div>
             </div>

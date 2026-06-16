@@ -4,6 +4,8 @@ import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import { DeleteDialog } from '@components';
 import {Tft} from '@app/types/pyhss';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faEdit} from '@fortawesome/free-solid-svg-icons';
 
 const TftItem = (props: {
   row: Tft,
@@ -22,7 +24,7 @@ const TftItem = (props: {
         <TableCell>{row.direction}</TableCell>
         <TableCell>{row.last_modified}</TableCell>
         <TableCell>
-          <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
+          <Button onClick={() => openEditCallback(row)}><FontAwesomeIcon icon={faEdit} /></Button>
           <DeleteDialog id={row.tft_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>

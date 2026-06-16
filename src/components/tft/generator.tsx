@@ -6,6 +6,8 @@ import Button from '@mui/material/Button';
 
 import {SelectField, InputField} from '@components';
 import i18n from '@app/utils/i18n';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faArrowUp, faBroom} from '@fortawesome/free-solid-svg-icons';
 
 
 
@@ -45,8 +47,8 @@ const TftGenerator = (props: {
           <Grid item xs={12}>&nbsp;</Grid>
           <Grid item xs={10}><h3>TFT Rule Generator</h3></Grid>
           <Grid item xs={2}>
-            <Button onClick={clearGenerator}>Clear&nbsp; <i className="fas fa-broom"></i></Button>
-            <Button onClick={generateFilter} variant="contained">Generate&nbsp;<i className="fas fa-arrow-up"></i></Button>
+            <Button onClick={clearGenerator}>Clear&nbsp; <FontAwesomeIcon icon={faBroom} /></Button>
+            <Button onClick={generateFilter} variant="contained">Generate&nbsp;<FontAwesomeIcon icon={faArrowUp} /></Button>
           </Grid>
           <Grid item xs={3}>
             <SelectField

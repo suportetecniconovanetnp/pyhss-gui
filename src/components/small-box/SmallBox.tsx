@@ -1,10 +1,13 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faArrowCircleRight, faBoxArchive} from '@fortawesome/free-solid-svg-icons';
+import {IconDefinition} from '@fortawesome/fontawesome-svg-core';
 
 export interface SmallBoxProps {
   type: 'info' | 'success' | 'warning' | 'danger';
-  icon?: string;
+  icon?: IconDefinition;
   count: number;
   title: string;
   navigateTo: string;
@@ -12,7 +15,7 @@ export interface SmallBoxProps {
 
 const SmallBox = ({
   type = 'info',
-  icon = 'ion-bag',
+  icon = faBoxArchive,
   count,
   title,
   navigateTo
@@ -26,11 +29,11 @@ const SmallBox = ({
         <p>{title}</p>
       </div>
       <div className="icon">
-        <i className={`ion ${icon || 'ion-bag'}`} />
+        <FontAwesomeIcon icon={icon} />
       </div>
       <Link to={navigateTo} className="small-box-footer">
         <span className="mr-2">{t<string>('generic.moreInfo')}</span>
-        <i className="fa fa-arrow-circle-right" />
+        <FontAwesomeIcon icon={faArrowCircleRight} />
       </Link>
     </div>
   );

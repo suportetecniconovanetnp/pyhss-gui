@@ -2,6 +2,8 @@ import React from 'react';
 import Modal from '@mui/material/Modal';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faTrash} from '@fortawesome/free-solid-svg-icons';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -33,7 +35,7 @@ const DeleteDialog = (props: { id: number, callback: (id: number) => void }) => 
 
   return (
     <React.Fragment>
-     <Button onClick={handleOpen}><i className="fas fa-trash"></i></Button>
+     <Button onClick={handleOpen}><FontAwesomeIcon icon={faTrash} /></Button>
      <Modal
        open={open}
        onClose={handleClose}

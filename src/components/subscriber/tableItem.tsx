@@ -17,6 +17,8 @@ import Button from '@mui/material/Button';
 import { DeleteDialog } from '@components';
 import i18n from '@app/utils/i18n';
 import {Subscriber} from '@app/types/pyhss';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faEdit} from '@fortawesome/free-solid-svg-icons';
 
 const SubscriberItem = (props: {
   row: Subscriber,
@@ -54,7 +56,7 @@ const SubscriberItem = (props: {
         <TableCell>{row.ue_ambr_ul}</TableCell>
         <TableCell>{row.subscribed_rau_tau_timer}</TableCell>
         <TableCell>
-          <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
+          <Button onClick={() => openEditCallback(row)}><FontAwesomeIcon icon={faEdit} /></Button>
           <DeleteDialog id={row.subscriber_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>

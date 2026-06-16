@@ -5,6 +5,8 @@ import TableRow from '@mui/material/TableRow';
 import { DeleteDialog } from '@components';
 import i18n from '@app/utils/i18n';
 import {RoamingNetwork} from '@app/types/pyhss';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faEdit} from '@fortawesome/free-solid-svg-icons';
 
 const RoamingNetworkItem = (props: {
   row: RoamingNetwork,
@@ -26,7 +28,7 @@ const RoamingNetworkItem = (props: {
         <TableCell>{row.mnc}</TableCell>
         <TableCell>{row.preference}</TableCell>
         <TableCell>
-          <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
+          <Button onClick={() => openEditCallback(row)}><FontAwesomeIcon icon={faEdit} /></Button>
           <DeleteDialog id={row.roaming_network_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>

@@ -15,6 +15,8 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { DeleteDialog } from '@components';
 import i18n from '@app/utils/i18n';
 import {Auc} from '@app/types/pyhss';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faEdit} from '@fortawesome/free-solid-svg-icons';
 
 const AucItem = (props: {
   row: Auc,
@@ -60,7 +62,7 @@ const AucItem = (props: {
         <TableCell>{row.sim_vendor}</TableCell>
         <TableCell>{(row.esim?i18n.t('generic.yes'):i18n.t('generic.no'))}</TableCell>
         <TableCell>
-          <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
+          <Button onClick={() => openEditCallback(row)}><FontAwesomeIcon icon={faEdit} /></Button>
           <DeleteDialog id={row.auc_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>

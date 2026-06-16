@@ -8,6 +8,8 @@ import { setAuthentication } from '@store/reducers/auth';
 import { setWindowClass } from '@app/utils/helpers';
 import { PfCheckbox, PfButton } from '@profabric/react-components';
 import * as Yup from 'yup';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faLock, faSitemap} from '@fortawesome/free-solid-svg-icons';
 
 import {
   authLogin,
@@ -84,7 +86,7 @@ const Login = () => {
                 ) : (
                   <InputGroup.Append>
                     <InputGroup.Text>
-                      <i className="fas fa-sitemap" />
+                      <FontAwesomeIcon icon={faSitemap} />
                     </InputGroup.Text>
                   </InputGroup.Append>
                 )}
@@ -107,7 +109,7 @@ const Login = () => {
                 ) : (
                   <InputGroup.Append>
                     <InputGroup.Text>
-                      <i className="fas fa-lock" />
+                      <FontAwesomeIcon icon={faLock} />
                     </InputGroup.Text>
                   </InputGroup.Append>
                 )}

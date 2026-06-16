@@ -4,6 +4,8 @@ import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import { DeleteDialog, NetworkBandwidthFormatter } from '@components';
 import {ChargingRule} from '@app/types/pyhss';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faEdit} from '@fortawesome/free-solid-svg-icons';
 
 const ChargingRuleItem = (props: {
   row: ChargingRule,
@@ -32,7 +34,7 @@ const ChargingRuleItem = (props: {
         <TableCell>{row.rating_group}</TableCell>
         <TableCell>{row.last_modified}</TableCell>
         <TableCell>
-          <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
+          <Button onClick={() => openEditCallback(row)}><FontAwesomeIcon icon={faEdit} /></Button>
           <DeleteDialog id={row.charging_rule_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>

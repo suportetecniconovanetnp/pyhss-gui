@@ -1,6 +1,8 @@
 import React from 'react';
 import Button from '@mui/material/Button';
 import i18n from '@app/utils/i18n';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faSave} from '@fortawesome/free-solid-svg-icons';
 
 const SaveButtons = (props: {
   onClickSave: () => void | Promise<void>,
@@ -10,7 +12,7 @@ const SaveButtons = (props: {
   const {onClickSave, onClickClose, disabled=false} = props;
   return (
     <span>
-     <Button variant="contained" disabled={disabled} onClick={() => onClickSave()}>{i18n.t('generic.save')}&nbsp;<i className="fas fa-save"></i></Button>
+     <Button variant="contained" disabled={disabled} onClick={() => onClickSave()}>{i18n.t('generic.save')}&nbsp;<FontAwesomeIcon icon={faSave} /></Button>
       &nbsp;
      <Button variant="contained" onClick={() => onClickClose()}>{i18n.t('generic.cancel')}</Button>
     </span>

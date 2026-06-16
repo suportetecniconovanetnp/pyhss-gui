@@ -4,6 +4,8 @@ import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import { DeleteDialog } from '@components';
 import {Eir} from '@app/types/pyhss';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faEdit} from '@fortawesome/free-solid-svg-icons';
 
 const EirItem = (props: {
   row: Eir,
@@ -25,7 +27,7 @@ const EirItem = (props: {
         <TableCell>{regex_mode[Number(row.regex_mode ?? 0)]}</TableCell>
 	<TableCell>{match_response_code[Number(row.match_response_code ?? 0)]}</TableCell>
         <TableCell>
-          <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
+          <Button onClick={() => openEditCallback(row)}><FontAwesomeIcon icon={faEdit} /></Button>
           <DeleteDialog id={row.eir_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>

@@ -6,6 +6,8 @@ import React, {useEffect, useState} from 'react';
 import {NavLink, useNavigate, useLocation, Location} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import {IMenuItem} from '@app/modules/main/menu-sidebar/MenuSidebar';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faAngleLeft} from '@fortawesome/free-solid-svg-icons';
 
 const MenuItem = ({menuItem}: {menuItem: IMenuItem}) => {
   const [t] = useTranslation();
@@ -71,9 +73,9 @@ const MenuItem = ({menuItem}: {menuItem: IMenuItem}) => {
         onClick={handleMainMenuAction}
         style={{cursor: 'pointer'}}
       >
-        <i className={`${menuItem.icon}`} />
+        {menuItem.icon ? <FontAwesomeIcon className="nav-icon" icon={menuItem.icon} /> : null}
         <p>{t<string>(menuItem.name)}</p>
-        {isExpandable ? <i className="right fas fa-angle-left" /> : null}
+        {isExpandable ? <FontAwesomeIcon className="right" icon={faAngleLeft} /> : null}
       </a>
 
       {isExpandable &&
@@ -83,7 +85,7 @@ const MenuItem = ({menuItem}: {menuItem: IMenuItem}) => {
           <ul key={item.name} className="nav nav-treeview">
             <li className="nav-item">
               <NavLink className="nav-link" to={`${item.path}`}>
-                <i className={`${item.icon}`} />
+                {item.icon ? <FontAwesomeIcon className="nav-icon" icon={item.icon} /> : null}
                 <p>{t<string>(item.name)}</p>
               </NavLink>
             </li>

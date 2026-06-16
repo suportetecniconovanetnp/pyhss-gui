@@ -3,6 +3,8 @@ import {PfDropdown} from '@profabric/react-components';
 import React, {useEffect, useRef, useState} from 'react';
 import {NavLink} from 'react-router-dom';
 import styled from 'styled-components';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faSearch, faTimes} from '@fortawesome/free-solid-svg-icons';
 
 export const StyledDropdown = styled(PfDropdown)`
   border: none;
@@ -118,11 +120,7 @@ export const SidebarSearch = () => {
               className="btn btn-sidebar"
               onClick={() => handleIconClick()}
             >
-              <i
-                className={`fas ${searchText.length === 0 && 'fa-search'} ${
-                  searchText.length > 0 && 'fa-times'
-                } fa-fw`}
-              />
+              <FontAwesomeIcon fixedWidth icon={searchText.length === 0 ? faSearch : faTimes} />
             </button>
           </div>
         </div>

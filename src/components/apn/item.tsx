@@ -14,6 +14,8 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import i18n from '@app/utils/i18n';
 import {DeleteDialog, NetworkBandwidthFormatter} from "@components";
 import {Apn, ChargingRule} from '@app/types/pyhss';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faEdit} from '@fortawesome/free-solid-svg-icons';
 
 const ApnItem = (props: {
   row: Apn,
@@ -53,7 +55,7 @@ const ApnItem = (props: {
         <TableCell>{row.sgw_address}</TableCell>
         <TableCell>{row.pgw_address}</TableCell>
         <TableCell>
-          <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
+          <Button onClick={() => openEditCallback(row)}><FontAwesomeIcon icon={faEdit} /></Button>
           <DeleteDialog id={row.apn_id!} callback={deleteCallback} />
         </TableCell>
       </TableRow>

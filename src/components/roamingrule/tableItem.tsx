@@ -5,6 +5,8 @@ import TableRow from '@mui/material/TableRow';
 import { DeleteDialog } from '@components';
 import i18n from '@app/utils/i18n';
 import {RoamingNetwork, RoamingRule} from '@app/types/pyhss';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faEdit} from '@fortawesome/free-solid-svg-icons';
 
 const RoamingRuleItem = (props: {
   row: RoamingRule,
@@ -28,7 +30,7 @@ const RoamingRuleItem = (props: {
         <TableCell>{(row.allow?i18n.t('generic.yes'):i18n.t('generic.no'))}</TableCell>
         <TableCell>{(row.enabled?i18n.t('generic.yes'):i18n.t('generic.no'))}</TableCell>
         <TableCell>
-          <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
+          <Button onClick={() => openEditCallback(row)}><FontAwesomeIcon icon={faEdit} /></Button>
           <DeleteDialog id={row.roaming_rule_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>

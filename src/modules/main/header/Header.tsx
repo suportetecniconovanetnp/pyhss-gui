@@ -5,6 +5,8 @@ import {useDispatch, useSelector} from 'react-redux';
 import {toggleControlSidebar, toggleSidebarMenu} from '@app/store/reducers/ui';
 import UserDropdown from '@app/modules/main/header/user-dropdown/UserDropdown';
 import LanguagesDropdown from '@app/modules/main/header/languages-dropdown/LanguagesDropdown';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faBars, faThLarge} from '@fortawesome/free-solid-svg-icons';
 
 const Header = () => {
   const [t] = useTranslation();
@@ -37,7 +39,7 @@ const Header = () => {
             type="button"
             className="nav-link"
           >
-            <i className="fas fa-bars" />
+            <FontAwesomeIcon icon={faBars} />
           </button>
         </li>
       </ul>
@@ -50,7 +52,7 @@ const Header = () => {
             className="nav-link"
             onClick={handleToggleControlSidebar}
           >
-            <i className="fas fa-th-large" />
+            <FontAwesomeIcon icon={faThLarge} />
           </button>
         </li>
       </ul>

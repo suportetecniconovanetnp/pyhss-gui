@@ -16,6 +16,8 @@ import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import { DeleteDialog } from '@components';
 import i18n from '@app/utils/i18n';
 import {ImsSubscriber} from '@app/types/pyhss';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faEdit} from '@fortawesome/free-solid-svg-icons';
 
 type ImsSubscriberRow = ImsSubscriber & {
   pcscf_timestamp?: string;
@@ -53,7 +55,7 @@ const ImsSubscriberItem = (props: {
         <TableCell>{row.sh_profile}</TableCell>
         <TableCell>{row.last_modified}</TableCell>
         <TableCell>
-          <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
+          <Button onClick={() => openEditCallback(row)}><FontAwesomeIcon icon={faEdit} /></Button>
           <DeleteDialog id={row.ims_subscriber_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>

@@ -11,6 +11,8 @@ import {
 } from '@components';
 
 import i18n from '@app/utils/i18n';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faSave} from '@fortawesome/free-solid-svg-icons';
 
 import {ChargingRuleApi} from '../../services/pyhss';
 
@@ -211,7 +213,7 @@ const ChargingRuleAddItem = (props: { open: boolean, handleClose: () => void, da
               </Grid>
             </Grid>
           </Box>
-          <Button variant="contained" onClick={() => handleSave()}>{i18n.t('generic.save')}&nbsp;<i className="fas fa-save"></i></Button>
+          <Button variant="contained" onClick={() => handleSave()}>{i18n.t('generic.save')}&nbsp;<FontAwesomeIcon icon={faSave} /></Button>
            &nbsp;
           <Button variant="contained" onClick={() => handleLocalClose()}>{i18n.t('generic.cancel')}</Button>
         </Box>

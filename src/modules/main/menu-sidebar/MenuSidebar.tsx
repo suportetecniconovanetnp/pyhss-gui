@@ -5,10 +5,25 @@ import {MenuItem} from '@components';
 import {PfImage} from '@profabric/react-components';
 import styled from 'styled-components';
 import i18n from '@app/utils/i18n';
+import {IconDefinition} from '@fortawesome/fontawesome-svg-core';
+import {
+  faBook,
+  faBroom,
+  faDatabase,
+  faMagic,
+  faNetworkWired,
+  faSearchDollar,
+  faShieldAlt,
+  faSimCard,
+  faTachometerAlt,
+  faUserTie,
+  faUsers,
+  faWifi,
+} from '@fortawesome/free-solid-svg-icons';
 
 export interface IMenuItem {
   name: string;
-  icon?: string;
+  icon?: IconDefinition;
   path?: string;
   children?: Array<IMenuItem>;
 }
@@ -16,60 +31,60 @@ export interface IMenuItem {
 export const MENU: IMenuItem[] = [
   {
     name: i18n.t('menusidebar.label.dashboard'),
-    icon: 'fas fa-tachometer-alt nav-icon',
+    icon: faTachometerAlt,
     path: '/'
   },
   {
     name: i18n.t('menusidebar.label.apn'),
-    icon: 'fas fa-wifi nav-icon',
+    icon: faWifi,
     path: '/apn'
   },
   {
     name: i18n.t('menusidebar.label.auc'),
-    icon: 'fas fa-sim-card nav-icon',
+    icon: faSimCard,
     path: '/auc'
   },
   {
     name: i18n.t('menusidebar.label.subscriber'),
-    icon: 'fas fa-users nav-icon',
+    icon: faUsers,
     path: '/subscriber'
   },
   {
     name: i18n.t('menusidebar.label.imssubscriber'),
-    icon: 'fas fa-user-tie nav-icon',
+    icon: faUserTie,
     path: '/imssubscriber'
   },
   {
     name: i18n.t('menusidebar.label.tft'),
-    icon: 'fas fa-shield-alt nav-icon',
+    icon: faShieldAlt,
     path: '/tft'
   },
   {
     name: i18n.t('menusidebar.label.chargingrule'),
-    icon: 'fas fa-search-dollar nav-icon',
+    icon: faSearchDollar,
     path: '/chargingrule'
   },
   {
     name: i18n.t('menusidebar.label.eir'),
-    icon: 'fas fa-database nav-icon',
+    icon: faDatabase,
     path: '/eir'
   },
   { name: 'Roaming',
-    icon: 'fas fa-broom nav-icon',
+    icon: faBroom,
     children: [
   {
     name: i18n.t('menusidebar.label.roamingnetwork'),
-    icon: 'fas fa-network-wired nav-icon',
+    icon: faNetworkWired,
     path: '/roamingnetwork'
   },
   {
     name: i18n.t('menusidebar.label.roamingrule'),
-    icon: 'fas fa-book nav-icon',
+    icon: faBook,
     path: '/roamingrule'
   }]},
   {
     name: "Subscriber wizard",
-    icon: 'fas fa-magic nav-icon',
+    icon: faMagic,
     path: '/addwizard'
   }
 ];
