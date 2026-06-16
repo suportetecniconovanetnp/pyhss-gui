@@ -14,7 +14,8 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import i18n from '@app/utils/i18n';
-import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
+import fetchAllPages from '@app/utils/fetchAllPages';
+import {RoamingNetwork as RoamingNetworkModel} from '@app/types/pyhss';
 
 const roamingNetworkTemplate = {
   "roaming_network_id": null,
@@ -25,31 +26,66 @@ const roamingNetworkTemplate = {
 }
 
 const RoamingNetwork = () => {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<RoamingNetworkModel[]>([]);
   const [openAdd, setOpenAdd] = useState(false);
-  const [dialogData, setDialogData] = useState(roamingNetworkTemplate);
+  const [dialogData, setDialogData] = useState<RoamingNetworkModel>(roamingNetworkTemplate);
   const [editMode, setEditMode] = useState(false);
-  const {
-    search,
-    page,
-    rowsPerPage,
-    filteredItems,
-    paginatedItems,
-    handleSearchChange,
-    handlePageChange,
-    handleRowsPerPageChange
-  } = useTableSearchPagination(items);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [count, setCount] = useState(-1);
 
-  React.useEffect(() => {
-    RoamingNetworkApi.getAll().then((data => {
-      setItems(data.data)
+  const loadPage = React.useCallback((currentPage: number, currentRowsPerPage: number) => {
+    RoamingNetworkApi.getAll({page: currentPage, pageSize: currentRowsPerPage}).then((data => {
+      const nextItems = data.data as RoamingNetworkModel[];
+      setItems(nextItems);
+      setCount(nextItems.length < currentRowsPerPage
+        ? currentPage * currentRowsPerPage + nextItems.length
+        : currentPage * currentRowsPerPage + nextItems.length + 1);
     }));
   }, []);
 
+  const runSearch = React.useCallback((term: string) => {
+    const normalized = term.trim().toLowerCase();
+
+    if (normalized === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    fetchAllPages<RoamingNetworkModel>((params) => RoamingNetworkApi.getAll(params)).then((allItems) => {
+      const filteredItems = allItems.filter((item) =>
+        [
+          item.roaming_network_id,
+          item.name,
+          item.mcc,
+          item.mnc,
+          item.preference
+        ].some((value) => String(value ?? '').toLowerCase().includes(normalized))
+      );
+
+      setItems(filteredItems);
+      setCount(filteredItems.length);
+      setPage(0);
+    });
+  }, [loadPage, page, rowsPerPage]);
+
+  React.useEffect(() => {
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
+  }, [loadPage, page, rowsPerPage, runSearch, search]);
+
   const refresh = () => {
-    RoamingNetworkApi.getAll().then((data => {
-      setItems(data.data)
-    }));
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
   }
 
   const handleDelete = (id: number) => {
@@ -67,7 +103,7 @@ const RoamingNetwork = () => {
     setOpenAdd(false);
     refresh();
   }
-  const openEdit = (row: any) => {
+  const openEdit = (row: RoamingNetworkModel) => {
     setEditMode(true);
     setDialogData(row);
     setOpenAdd(true);
@@ -84,7 +120,7 @@ const RoamingNetwork = () => {
                 fullWidth
                 id="search-field"
                 label={i18n.t('generic.search')}
-                onChange={handleSearchChange}
+                onChange={(event) => setSearch(event.target.value)}
                 size="small"
                 value={search}
                 variant="outlined"
@@ -106,7 +142,7 @@ const RoamingNetwork = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {paginatedItems.map((row) => (
+                      {items.map((row) => (
                         <RoamingNetworkItem checked={false} checkboxCallback={undefined} key={row.roaming_network_id} row={row} deleteCallback={handleDelete} openEditCallback={openEdit} />
                       ))}
                     </TableBody>
@@ -114,9 +150,12 @@ const RoamingNetwork = () => {
                 </TableContainer>
                 <TablePagination
                   component="div"
-                  count={filteredItems.length}
-                  onPageChange={handlePageChange}
-                  onRowsPerPageChange={handleRowsPerPageChange}
+                  count={count}
+                  onPageChange={(_event, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(event) => {
+                    setRowsPerPage(Number(event.target.value));
+                    setPage(0);
+                  }}
                   page={page}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[10, 25, 50, 100]}

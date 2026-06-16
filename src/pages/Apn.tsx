@@ -14,7 +14,8 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import i18n from '@app/utils/i18n';
-import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
+import fetchAllPages from '@app/utils/fetchAllPages';
+import {Apn as ApnModel, ChargingRule} from '@app/types/pyhss';
   
 const apnTemplate = {
   "apn": "",
@@ -33,38 +34,77 @@ const apnTemplate = {
 }
 
 const Apn = () => {
-  const [apns, setAPNS] = useState<any[]>([]);
-  const [dialogData, setDialogData] = useState(apnTemplate);
+  const [apns, setAPNS] = useState<ApnModel[]>([]);
+  const [dialogData, setDialogData] = useState<ApnModel>(apnTemplate);
   const [openAdd, setOpenAdd] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [chargingRules, setChargingRules] = useState<any[]>([]);
-  const {
-    search,
-    page,
-    rowsPerPage,
-    filteredItems,
-    paginatedItems,
-    handleSearchChange,
-    handlePageChange,
-    handleRowsPerPageChange
-  } = useTableSearchPagination(apns);
+  const [chargingRules, setChargingRules] = useState<ChargingRule[]>([]);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [count, setCount] = useState(-1);
 
-  React.useEffect(() => {
-    ApnApi.getAll().then((data => {
-        setAPNS(data.data)
-    }))
-    ChargingRuleApi.getAll().then((data => {
-        setChargingRules(data.data)
+  const loadSupportingData = React.useCallback(() => {
+    fetchAllPages<ChargingRule>((params) => ChargingRuleApi.getAll(params)).then(setChargingRules);
+  }, []);
+
+  const loadPage = React.useCallback((currentPage: number, currentRowsPerPage: number) => {
+    ApnApi.getAll({page: currentPage, pageSize: currentRowsPerPage}).then((data => {
+      const items = data.data as ApnModel[];
+      setAPNS(items);
+      setCount(items.length < currentRowsPerPage
+        ? currentPage * currentRowsPerPage + items.length
+        : currentPage * currentRowsPerPage + items.length + 1);
     }))
   }, []);
 
+  const runSearch = React.useCallback((term: string) => {
+    const normalized = term.trim().toLowerCase();
+
+    if (normalized === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    fetchAllPages<ApnModel>((params) => ApnApi.getAll(params)).then((allItems) => {
+      const filteredItems = allItems.filter((item) =>
+        [
+          item.apn,
+          item.apn_id,
+          item.pgw_address,
+          item.sgw_address,
+          item.qci,
+          item.ip_version
+        ].some((value) => String(value ?? '').toLowerCase().includes(normalized))
+      );
+
+      setAPNS(filteredItems);
+      setCount(filteredItems.length);
+      setPage(0);
+    });
+  }, [loadPage, page, rowsPerPage]);
+
+  React.useEffect(() => {
+    loadSupportingData();
+  }, [loadSupportingData]);
+
+  React.useEffect(() => {
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
+  }, [loadPage, page, rowsPerPage, runSearch, search]);
+
   const refresh = () => {
-    ApnApi.getAll().then((data => {
-        setAPNS(data.data)
-    }))
-    ChargingRuleApi.getAll().then((data => {
-        setChargingRules(data.data)
-    }))
+    loadSupportingData();
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
   }
 
   const handleDelete = (id: number) => {
@@ -82,7 +122,7 @@ const Apn = () => {
     setDialogData(apnTemplate);
     refresh();
   }
-  const openEdit = (row: any) => {
+  const openEdit = (row: ApnModel) => {
     setEditMode(true);
     setDialogData(row);
     setOpenAdd(true);
@@ -99,7 +139,7 @@ const Apn = () => {
                 fullWidth
                 id="search-field"
                 label={i18n.t('generic.search')}
-                onChange={handleSearchChange}
+                onChange={(event) => setSearch(event.target.value)}
                 size="small"
                 value={search}
                 variant="outlined"
@@ -124,7 +164,7 @@ const Apn = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {paginatedItems.map((row) => (
+                      {apns.map((row) => (
                         <ApnItem key={row.apn_id} row={row} chargingRules={chargingRules} deleteCallback={handleDelete} openEditCallback={openEdit} />
                       ))}
                     </TableBody>
@@ -132,9 +172,12 @@ const Apn = () => {
                 </TableContainer>
                 <TablePagination
                   component="div"
-                  count={filteredItems.length}
-                  onPageChange={handlePageChange}
-                  onRowsPerPageChange={handleRowsPerPageChange}
+                  count={count}
+                  onPageChange={(_event, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(event) => {
+                    setRowsPerPage(Number(event.target.value));
+                    setPage(0);
+                  }}
                   page={page}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[10, 25, 50, 100]}

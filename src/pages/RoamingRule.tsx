@@ -14,7 +14,8 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import i18n from '@app/utils/i18n';
-import useTableSearchPagination, {buildDefaultSearchText} from '@app/hooks/useTableSearchPagination';
+import fetchAllPages from '@app/utils/fetchAllPages';
+import {RoamingNetwork, RoamingRule} from '@app/types/pyhss';
 
 const roamingRuleTemplate = {
   "roaming_rule_id": null,
@@ -24,40 +25,76 @@ const roamingRuleTemplate = {
 }
 
 const RoamingRule = () => {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<RoamingRule[]>([]);
   const [openAdd, setOpenAdd] = useState(false);
-  const [dialogData, setDialogData] = useState(roamingRuleTemplate);
+  const [dialogData, setDialogData] = useState<RoamingRule>(roamingRuleTemplate);
   const [editMode, setEditMode] = useState(false);
-  const [network, setNetwork] = useState<any[]>([]);
-  const getSearchText = (row: any) => {
-    const currentNetwork = network.find((item: any) => item.roaming_network_id === row.roaming_network_id);
+  const [network, setNetwork] = useState<RoamingNetwork[]>([]);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [count, setCount] = useState(-1);
 
-    return `${buildDefaultSearchText(row)} ${buildDefaultSearchText(currentNetwork)}`;
-  };
-  const {
-    search,
-    page,
-    rowsPerPage,
-    filteredItems,
-    paginatedItems,
-    handleSearchChange,
-    handlePageChange,
-    handleRowsPerPageChange
-  } = useTableSearchPagination(items, getSearchText);
-
-  React.useEffect(() => {
-    RoamingNetworkApi.getAll().then((data => {
-      setNetwork(data.data);
-      RoamingRuleApi.getAll().then((data => {
-        setItems(data.data)
-      }));
-    }))
+  const getSearchText = React.useCallback((row: RoamingRule, allNetworks: RoamingNetwork[]) => {
+    const currentNetwork = allNetworks.find((item) => item.roaming_network_id === row.roaming_network_id);
+    return `${String(row.roaming_rule_id ?? '')} ${String(row.allow)} ${String(row.enabled)} ${String(currentNetwork?.name ?? '')} ${String(currentNetwork?.mcc ?? '')}${String(currentNetwork?.mnc ?? '')}`.toLowerCase();
   }, []);
 
-  const refresh = () => {
-    RoamingRuleApi.getAll().then((data => {
-      setItems(data.data)
+  const loadNetworks = React.useCallback(() => {
+    fetchAllPages<RoamingNetwork>((params) => RoamingNetworkApi.getAll(params)).then(setNetwork);
+  }, []);
+
+  const loadPage = React.useCallback((currentPage: number, currentRowsPerPage: number) => {
+    RoamingRuleApi.getAll({page: currentPage, pageSize: currentRowsPerPage}).then((data => {
+      const nextItems = data.data as RoamingRule[];
+      setItems(nextItems);
+      setCount(nextItems.length < currentRowsPerPage
+        ? currentPage * currentRowsPerPage + nextItems.length
+        : currentPage * currentRowsPerPage + nextItems.length + 1);
     }));
+  }, []);
+
+  const runSearch = React.useCallback((term: string) => {
+    const normalized = term.trim().toLowerCase();
+
+    if (normalized === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    Promise.all([
+      fetchAllPages<RoamingRule>((params) => RoamingRuleApi.getAll(params)),
+      fetchAllPages<RoamingNetwork>((params) => RoamingNetworkApi.getAll(params))
+    ]).then(([allRules, allNetworks]) => {
+      setNetwork(allNetworks);
+      const filteredItems = allRules.filter((item) => getSearchText(item, allNetworks).includes(normalized));
+      setItems(filteredItems);
+      setCount(filteredItems.length);
+      setPage(0);
+    });
+  }, [getSearchText, loadPage, page, rowsPerPage]);
+
+  React.useEffect(() => {
+    loadNetworks();
+  }, [loadNetworks]);
+
+  React.useEffect(() => {
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
+  }, [loadPage, page, rowsPerPage, runSearch, search]);
+
+  const refresh = () => {
+    loadNetworks();
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
   }
 
   const handleDelete = (id: number) => {
@@ -75,7 +112,7 @@ const RoamingRule = () => {
     setOpenAdd(false);
     refresh();
   }
-  const openEdit = (row: any) => {
+  const openEdit = (row: RoamingRule) => {
     setEditMode(true);
     setDialogData(row);
     setOpenAdd(true);
@@ -92,7 +129,7 @@ const RoamingRule = () => {
                 fullWidth
                 id="search-field"
                 label={i18n.t('generic.search')}
-                onChange={handleSearchChange}
+                onChange={(event) => setSearch(event.target.value)}
                 size="small"
                 value={search}
                 variant="outlined"
@@ -113,7 +150,7 @@ const RoamingRule = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {paginatedItems.map((row) => (
+                      {items.map((row) => (
                         <RoamingRuleItem checked={false} key={row.roaming_rule_id} row={row} deleteCallback={handleDelete} openEditCallback={openEdit} network={network} />
                       ))}
                     </TableBody>
@@ -121,9 +158,12 @@ const RoamingRule = () => {
                 </TableContainer>
                 <TablePagination
                   component="div"
-                  count={filteredItems.length}
-                  onPageChange={handlePageChange}
-                  onRowsPerPageChange={handleRowsPerPageChange}
+                  count={count}
+                  onPageChange={(_event, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(event) => {
+                    setRowsPerPage(Number(event.target.value));
+                    setPage(0);
+                  }}
                   page={page}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[10, 25, 50, 100]}

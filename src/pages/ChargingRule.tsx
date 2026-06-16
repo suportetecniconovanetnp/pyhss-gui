@@ -14,7 +14,8 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import i18n from '@app/utils/i18n';
-import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
+import fetchAllPages from '@app/utils/fetchAllPages';
+import {ChargingRule as ChargingRuleModel} from '@app/types/pyhss';
 
 const charging_ruleTemplate = {
   "rule_name": "",
@@ -32,31 +33,67 @@ const charging_ruleTemplate = {
 }
 
 const ChargingRule = () => {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<ChargingRuleModel[]>([]);
   const [openAdd, setOpenAdd] = useState(false);
-  const [dialogData, setDialogData] = useState(charging_ruleTemplate);
+  const [dialogData, setDialogData] = useState<ChargingRuleModel>(charging_ruleTemplate);
   const [editMode, setEditMode] = useState(false);
-  const {
-    search,
-    page,
-    rowsPerPage,
-    filteredItems,
-    paginatedItems,
-    handleSearchChange,
-    handlePageChange,
-    handleRowsPerPageChange
-  } = useTableSearchPagination(items);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [count, setCount] = useState(-1);
 
-  React.useEffect(() => {
-    ChargingRuleApi.getAll().then((data => {
-      setItems(data.data)
+  const loadPage = React.useCallback((currentPage: number, currentRowsPerPage: number) => {
+    ChargingRuleApi.getAll({page: currentPage, pageSize: currentRowsPerPage}).then((data => {
+      const nextItems = data.data as ChargingRuleModel[];
+      setItems(nextItems);
+      setCount(nextItems.length < currentRowsPerPage
+        ? currentPage * currentRowsPerPage + nextItems.length
+        : currentPage * currentRowsPerPage + nextItems.length + 1);
     }));
   }, []);
 
+  const runSearch = React.useCallback((term: string) => {
+    const normalized = term.trim().toLowerCase();
+
+    if (normalized === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    fetchAllPages<ChargingRuleModel>((params) => ChargingRuleApi.getAll(params)).then((allItems) => {
+      const filteredItems = allItems.filter((item) =>
+        [
+          item.charging_rule_id,
+          item.rule_name,
+          item.qci,
+          item.tft_group_id,
+          item.precedence,
+          item.rating_group
+        ].some((value) => String(value ?? '').toLowerCase().includes(normalized))
+      );
+
+      setItems(filteredItems);
+      setCount(filteredItems.length);
+      setPage(0);
+    });
+  }, [loadPage, page, rowsPerPage]);
+
+  React.useEffect(() => {
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
+  }, [loadPage, page, rowsPerPage, runSearch, search]);
+
   const refresh = () => {
-    ChargingRuleApi.getAll().then((data => {
-      setItems(data.data)
-    }));
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
   }
 
   const handleDelete = (id: number) => {
@@ -75,7 +112,7 @@ const ChargingRule = () => {
     setDialogData(charging_ruleTemplate);
     refresh();
   }
-  const openEdit = (row: any) => {
+  const openEdit = (row: ChargingRuleModel) => {
     setEditMode(true);
     setDialogData(row);
     setOpenAdd(true);
@@ -92,7 +129,7 @@ const ChargingRule = () => {
                 fullWidth
                 id="search-field"
                 label={i18n.t('generic.search')}
-                onChange={handleSearchChange}
+                onChange={(event) => setSearch(event.target.value)}
                 size="small"
                 value={search}
                 variant="outlined"
@@ -123,7 +160,7 @@ const ChargingRule = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {paginatedItems.map((row) => (
+                      {items.map((row) => (
                         <ChargingRuleItem key={row.charging_rule_id} row={row} deleteCallback={handleDelete} openEditCallback={openEdit} />
                       ))}
                     </TableBody>
@@ -131,9 +168,12 @@ const ChargingRule = () => {
                 </TableContainer>
                 <TablePagination
                   component="div"
-                  count={filteredItems.length}
-                  onPageChange={handlePageChange}
-                  onRowsPerPageChange={handleRowsPerPageChange}
+                  count={count}
+                  onPageChange={(_event, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(event) => {
+                    setRowsPerPage(Number(event.target.value));
+                    setPage(0);
+                  }}
                   page={page}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[10, 25, 50, 100]}
