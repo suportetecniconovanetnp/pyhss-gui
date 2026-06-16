@@ -15,7 +15,7 @@ import TextField from '@mui/material/TextField';
 import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
 import i18n from '@app/utils/i18n';
-import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
+import {ImsSubscriber} from '@app/types/pyhss';
 
 const imsSubscriberTemplate = {
   "msisdn": "",
@@ -32,31 +32,63 @@ const imsSubscriberTemplate = {
 }
 
 const IMSSubscriber = () => {
-  const [dialogData, setDialogData] = React.useState(imsSubscriberTemplate);
+  const [dialogData, setDialogData] = React.useState<ImsSubscriber>(imsSubscriberTemplate);
   const [editMode, setEditMode] = React.useState(false);
   const [openAdd, setOpenAdd] = React.useState(false);
-  const [subscribers, setSubscribers] = React.useState<any[]>([]);
-  const {
-    search,
-    page,
-    rowsPerPage,
-    filteredItems,
-    paginatedItems,
-    handleSearchChange,
-    handlePageChange,
-    handleRowsPerPageChange
-  } = useTableSearchPagination(subscribers);
+  const [subscribers, setSubscribers] = React.useState<ImsSubscriber[]>([]);
+  const [search, setSearch] = React.useState('');
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [count, setCount] = React.useState(-1);
 
-  React.useEffect(() => {
-    ImsSubscriberApi.getAll().then((data => {
-        setSubscribers(data.data)
-    }))
+  const loadPage = React.useCallback((currentPage: number, currentRowsPerPage: number) => {
+    ImsSubscriberApi.getAll({page: currentPage, pageSize: currentRowsPerPage}).then((data) => {
+      const items = data.data as ImsSubscriber[];
+      setSubscribers(items);
+      setCount(items.length < currentRowsPerPage
+        ? currentPage * currentRowsPerPage + items.length
+        : currentPage * currentRowsPerPage + items.length + 1);
+    });
   }, []);
 
+  const runSearch = React.useCallback((term: string) => {
+    const normalized = term.trim();
+
+    if (normalized === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    Promise.allSettled([
+      ImsSubscriberApi.findByImsi(normalized),
+      ImsSubscriberApi.findByMsisdn(normalized)
+    ]).then((results) => {
+      const items = results
+        .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+        .map((result) => result.value.data as ImsSubscriber)
+        .filter((item, index, array) => array.findIndex((candidate) => candidate.ims_subscriber_id === item.ims_subscriber_id) === index);
+      setSubscribers(items);
+      setCount(items.length);
+      setPage(0);
+    });
+  }, [loadPage, page, rowsPerPage]);
+
+  React.useEffect(() => {
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
+  }, [loadPage, page, rowsPerPage, runSearch, search]);
+
   const refresh = () => {
-    ImsSubscriberApi.getAll().then((data => {
-        setSubscribers(data.data)
-    }))
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
   }
 
   const handleDelete = (id: number) => {
@@ -75,7 +107,7 @@ const IMSSubscriber = () => {
     setDialogData(imsSubscriberTemplate)
     refresh();
   }
-  const openEdit = (row: any) => {
+  const openEdit = (row: ImsSubscriber) => {
     setEditMode(true);
     setDialogData(row);
     setOpenAdd(true);
@@ -92,7 +124,7 @@ const IMSSubscriber = () => {
                 fullWidth
                 id="search-field"
                 label={i18n.t('generic.search')}
-                onChange={handleSearchChange}
+                onChange={(event) => setSearch(event.target.value)}
                 size="small"
                 value={search}
                 variant="outlined"
@@ -116,7 +148,7 @@ const IMSSubscriber = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {paginatedItems.map((row) => (
+                      {subscribers.map((row) => (
                         <ImsSubscriberItem key={row.ims_subscriber_id} row={row} deleteCallback={handleDelete} openEditCallback={openEdit} />
                       ))}
                     </TableBody>
@@ -124,9 +156,12 @@ const IMSSubscriber = () => {
                 </TableContainer>
                 <TablePagination
                   component="div"
-                  count={filteredItems.length}
-                  onPageChange={handlePageChange}
-                  onRowsPerPageChange={handleRowsPerPageChange}
+                  count={count}
+                  onPageChange={(_event, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(event) => {
+                    setRowsPerPage(Number(event.target.value));
+                    setPage(0);
+                  }}
                   page={page}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[10, 25, 50, 100]}

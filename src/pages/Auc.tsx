@@ -17,7 +17,7 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import { useSearchParams } from "react-router-dom";
 import i18n from '@app/utils/i18n';
-import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
+import {Auc as AucModel} from '@app/types/pyhss';
 
 const aucTemplate = {
   "ki": "",
@@ -45,39 +45,70 @@ const aucTemplate = {
 }
 
 const Auc = () => {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<AucModel[]>([]);
   const [openAdd, setOpenAdd] = useState(false);
   const [openPySim, setOpenPySim] = useState(false);
   const [searchParams] = useSearchParams();
-  const [dialogData, setDialogData] = useState(aucTemplate);
+  const [dialogData, setDialogData] = useState<AucModel>(aucTemplate);
   const [editMode, setEditMode] = useState(false);
   const [error, setError] = useState('');
   const [selected, setSelected] = React.useState<readonly number[]>([]);
-  const [pySimItems, setPySimItems] = useState<any[]>([]);
-  const {
-    search,
-    page,
-    rowsPerPage,
-    filteredItems,
-    paginatedItems,
-    handleSearchChange,
-    handlePageChange,
-    handleRowsPerPageChange
-  } = useTableSearchPagination(items);
+  const [pySimItems, setPySimItems] = useState<AucModel[]>([]);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [count, setCount] = useState(-1);
 
   const aucSearch = searchParams.get('auc');
+
+  const loadPage = React.useCallback((currentPage: number, currentRowsPerPage: number) => {
+    AucApi.getAll({page: currentPage, pageSize: currentRowsPerPage}).then((data) => {
+      const nextItems = data.data as AucModel[];
+      setItems(nextItems);
+      setCount(nextItems.length < currentRowsPerPage
+        ? currentPage * currentRowsPerPage + nextItems.length
+        : currentPage * currentRowsPerPage + nextItems.length + 1);
+    });
+  }, []);
+
+  const runSearch = React.useCallback((term: string) => {
+    const normalized = term.trim();
+
+    if (normalized === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    Promise.allSettled([
+      AucApi.findByImsi(normalized),
+      AucApi.findByIccid(normalized)
+    ]).then((results) => {
+      const nextItems = results
+        .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+        .map((result) => result.value.data as AucModel)
+        .filter((item, index, array) => array.findIndex((candidate) => candidate.auc_id === item.auc_id) === index);
+      setItems(nextItems);
+      setCount(nextItems.length);
+      setPage(0);
+    });
+  }, [loadPage, page, rowsPerPage]);
 
   React.useEffect(() => {
     if (aucSearch) {
       AucApi.get(Number(aucSearch)).then((data => {
         setItems([data.data])
+        setCount(1);
       }));
-    } else {
-      AucApi.getAll().then((data => {
-        setItems(data.data)
-      }));
+      return;
     }
-  }, []);
+
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
+  }, [aucSearch, loadPage, page, rowsPerPage, runSearch, search]);
 
   const refresh = () => {
     if (aucSearch) {
@@ -85,9 +116,11 @@ const Auc = () => {
         setItems([data.data])
       }));
     } else {
-      AucApi.getAll().then((data => {
-        setItems(data.data)
-      }));
+      if (search.trim() === '') {
+        loadPage(page, rowsPerPage);
+      } else {
+        runSearch(search);
+      }
     }
   }
 
@@ -111,7 +144,7 @@ const Auc = () => {
     setOpenAdd(false);
     refresh();
   }
-  const openEdit = (row: any) => {
+  const openEdit = (row: AucModel) => {
     setEditMode(true);
     setDialogData(row);
     setOpenAdd(true);
@@ -146,7 +179,7 @@ const Auc = () => {
       );
     }
     setSelected(newSelected);
-    setPySimItems(items.filter((a) => newSelected.indexOf(a.auc_id) !== -1))
+    setPySimItems(items.filter((a) => newSelected.indexOf(a.auc_id!) !== -1))
   };
 
   const isChecked = (id: number) => selected.indexOf(id) !== -1; 
@@ -163,7 +196,7 @@ const Auc = () => {
                 fullWidth
                 id="search-field"
                 label={i18n.t('generic.search')}
-                onChange={handleSearchChange}
+                onChange={(event) => setSearch(event.target.value)}
                 size="small"
                 value={search}
                 variant="outlined"
@@ -189,8 +222,8 @@ const Auc = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {(aucSearch ? items : paginatedItems).map((row) => (
-                        <AucItem checked={isChecked(row.auc_id)} checkboxCallback={checkboxCallback} key={row.auc_id} row={row} single={(aucSearch?true:false)} deleteCallback={handleDelete} openEditCallback={openEdit}/>
+                      {items.map((row) => (
+                        <AucItem checked={isChecked(row.auc_id!)} checkboxCallback={checkboxCallback} key={row.auc_id} row={row} single={(aucSearch?true:false)} deleteCallback={handleDelete} openEditCallback={openEdit}/>
                       ))}
                     </TableBody>
                   </Table>
@@ -198,9 +231,12 @@ const Auc = () => {
                 {!aucSearch && (
                 <TablePagination
                   component="div"
-                  count={filteredItems.length}
-                  onPageChange={handlePageChange}
-                  onRowsPerPageChange={handleRowsPerPageChange}
+                  count={count}
+                  onPageChange={(_event, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(event) => {
+                    setRowsPerPage(Number(event.target.value));
+                    setPage(0);
+                  }}
                   page={page}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[10, 25, 50, 100]}

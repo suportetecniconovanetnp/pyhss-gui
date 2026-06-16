@@ -24,6 +24,10 @@ class EirApi {
     return http.get(`/eir/${id}`);
   }
 
+  lookupByImei(imei: string) {
+    return http.get(`/eir/lookup_imei/${imei}`);
+  }
+
   create(data: Eir) {
     return http.put("/eir/", data);
   }

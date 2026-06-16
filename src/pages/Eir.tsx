@@ -14,37 +14,65 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import i18n from '@app/utils/i18n';
-import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
+import {Eir as EirModel} from '@app/types/pyhss';
   
 const eirTemplate = {
+  imei: '',
+  imsi: '',
+  regex_mode: '0',
+  match_response_code: '0'
 }
 
 const Eir = () => {
-  const [eirs, setEIRS] = useState<any[]>([]);
-  const [dialogData, setDialogData] = useState(eirTemplate);
+  const [eirs, setEIRS] = useState<EirModel[]>([]);
+  const [dialogData, setDialogData] = useState<EirModel>(eirTemplate);
   const [openAdd, setOpenAdd] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const {
-    search,
-    page,
-    rowsPerPage,
-    filteredItems,
-    paginatedItems,
-    handleSearchChange,
-    handlePageChange,
-    handleRowsPerPageChange
-  } = useTableSearchPagination(eirs);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [count, setCount] = useState(-1);
 
-  React.useEffect(() => {
-    EirApi.getAll().then((data => {
-        setEIRS(data.data)
-    }))
+  const loadPage = React.useCallback((currentPage: number, currentRowsPerPage: number) => {
+    EirApi.getAll({page: currentPage, pageSize: currentRowsPerPage}).then((data) => {
+      const items = data.data as EirModel[];
+      setEIRS(items);
+      setCount(items.length < currentRowsPerPage
+        ? currentPage * currentRowsPerPage + items.length
+        : currentPage * currentRowsPerPage + items.length + 1);
+    });
   }, []);
 
+  React.useEffect(() => {
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    EirApi.lookupByImei(search.trim()).then((data => {
+      setEIRS([data.data]);
+      setCount(1);
+      setPage(0);
+    })).catch(() => {
+      setEIRS([]);
+      setCount(0);
+      setPage(0);
+    });
+  }, [loadPage, page, rowsPerPage, search]);
+
   const refresh = () => {
-    EirApi.getAll().then((data => {
-        setEIRS(data.data)
-    }))
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    EirApi.lookupByImei(search.trim()).then((data => {
+      setEIRS([data.data]);
+      setCount(1);
+    })).catch(() => {
+      setEIRS([]);
+      setCount(0);
+    });
   }
 
   const handleDelete = (id: number) => {
@@ -62,7 +90,7 @@ const Eir = () => {
     setDialogData(eirTemplate);
     refresh();
   }
-  const openEdit = (row: any) => {
+  const openEdit = (row: EirModel) => {
     setEditMode(true);
     setDialogData(row);
     setOpenAdd(true);
@@ -79,7 +107,7 @@ const Eir = () => {
                 fullWidth
                 id="search-field"
                 label={i18n.t('generic.search')}
-                onChange={handleSearchChange}
+                onChange={(event) => setSearch(event.target.value)}
                 size="small"
                 value={search}
                 variant="outlined"
@@ -102,7 +130,7 @@ const Eir = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {paginatedItems.map((row) => (
+                      {eirs.map((row) => (
                         <EirItem key={row.eir_id} row={row}  deleteCallback={handleDelete} openEditCallback={openEdit} />
                       ))}
                     </TableBody>
@@ -110,9 +138,12 @@ const Eir = () => {
                 </TableContainer>
                 <TablePagination
                   component="div"
-                  count={filteredItems.length}
-                  onPageChange={handlePageChange}
-                  onRowsPerPageChange={handleRowsPerPageChange}
+                  count={count}
+                  onPageChange={(_event, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(event) => {
+                    setRowsPerPage(Number(event.target.value));
+                    setPage(0);
+                  }}
                   page={page}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[10, 25, 50, 100]}

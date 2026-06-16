@@ -14,7 +14,7 @@ import TextField from '@mui/material/TextField';
 import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
 import i18n from '@app/utils/i18n';
-import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
+import {Subscriber as SubscriberModel} from '@app/types/pyhss';
 
 const subscriberTemplate = {
   "imsi": "",
@@ -33,31 +33,63 @@ const subscriberTemplate = {
 }
 
 const Subscriber = () => {
-  const [dialogData, setDialogData] = React.useState(subscriberTemplate);
+  const [dialogData, setDialogData] = React.useState<SubscriberModel>(subscriberTemplate);
   const [openAdd, setOpenAdd] = React.useState(false);
   const [editMode, setEditMode] = React.useState(false);
-  const [subscribers, setSubscribers] = React.useState<any[]>([]);
-  const {
-    search,
-    page,
-    rowsPerPage,
-    filteredItems,
-    paginatedItems,
-    handleSearchChange,
-    handlePageChange,
-    handleRowsPerPageChange
-  } = useTableSearchPagination(subscribers);
+  const [subscribers, setSubscribers] = React.useState<SubscriberModel[]>([]);
+  const [search, setSearch] = React.useState('');
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [count, setCount] = React.useState(-1);
 
-  React.useEffect(() => {
-    SubscriberApi.getAll().then((data => {
-        setSubscribers(data.data)
-    }))
+  const loadPage = React.useCallback((currentPage: number, currentRowsPerPage: number) => {
+    SubscriberApi.getAll({page: currentPage, pageSize: currentRowsPerPage}).then((data) => {
+      const items = data.data as SubscriberModel[];
+      setSubscribers(items);
+      setCount(items.length < currentRowsPerPage
+        ? currentPage * currentRowsPerPage + items.length
+        : currentPage * currentRowsPerPage + items.length + 1);
+    });
   }, []);
 
+  const runSearch = React.useCallback((term: string) => {
+    const normalized = term.trim();
+
+    if (normalized === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    Promise.allSettled([
+      SubscriberApi.findByImsi(normalized),
+      SubscriberApi.findByMsisdn(normalized)
+    ]).then((results) => {
+      const items = results
+        .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+        .map((result) => result.value.data as SubscriberModel)
+        .filter((item, index, array) => array.findIndex((candidate) => candidate.subscriber_id === item.subscriber_id) === index);
+      setSubscribers(items);
+      setCount(items.length);
+      setPage(0);
+    });
+  }, [loadPage, page, rowsPerPage]);
+
+  React.useEffect(() => {
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
+  }, [loadPage, page, rowsPerPage, runSearch, search]);
+
   const refresh = () => {
-    SubscriberApi.getAll().then((data => {
-        setSubscribers(data.data)
-    }))
+    if (search.trim() === '') {
+      loadPage(page, rowsPerPage);
+      return;
+    }
+
+    runSearch(search);
   }
 
   const handleDelete = (id: number) => {
@@ -76,7 +108,7 @@ const Subscriber = () => {
     setDialogData(subscriberTemplate);
     refresh();
   }
-  const openEdit = (row: any) => {
+  const openEdit = (row: SubscriberModel) => {
     setEditMode(true);
     setDialogData(row);
     setOpenAdd(true);
@@ -93,7 +125,7 @@ const Subscriber = () => {
                 fullWidth
                 id="search-field"
                 label={i18n.t('generic.search')}
-                onChange={handleSearchChange}
+                onChange={(event) => setSearch(event.target.value)}
                 size="small"
                 value={search}
                 variant="outlined"
@@ -121,7 +153,7 @@ const Subscriber = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {paginatedItems.map((row) => (
+                      {subscribers.map((row) => (
                         <SubscriberItem key={row.subscriber_id} row={row} deleteCallback={handleDelete} openEditCallback={openEdit}/>
                       ))}
                     </TableBody>
@@ -129,9 +161,12 @@ const Subscriber = () => {
                 </TableContainer>
                 <TablePagination
                   component="div"
-                  count={filteredItems.length}
-                  onPageChange={handlePageChange}
-                  onRowsPerPageChange={handleRowsPerPageChange}
+                  count={count}
+                  onPageChange={(_event, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(event) => {
+                    setRowsPerPage(Number(event.target.value));
+                    setPage(0);
+                  }}
                   page={page}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[10, 25, 50, 100]}
