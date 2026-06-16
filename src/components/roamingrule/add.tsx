@@ -9,17 +9,18 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
 import {RoamingNetworkApi} from '../../services/pyhss';
+import {ErrorChangeHandler, FormChangeHandler, RoamingNetwork, RoamingRule} from '@app/types/pyhss';
 
 const RoamingRuleAddItem = (props: { 
-  onChange: any,
-  state: any,
+  onChange: FormChangeHandler,
+  state: RoamingRule,
   edit: boolean, 
-  onError?: ReturnType<typeof Function>
+  onError?: ErrorChangeHandler
 }) => {
 
   const { onChange, state, edit, onError=() => {} } = props;
   const [errors, setErrors ] = React.useState({'network':'', 'name':'','mnc':'','mcc':'','preference':''})
-  const [network, setNetwork] = React.useState([]);
+  const [network, setNetwork] = React.useState<RoamingNetwork[]>([]);
   const [networkLoading, setNetworkLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -48,13 +49,15 @@ const RoamingRuleAddItem = (props: {
   }
 
 
-  const onChangeLocal = (name: string, value: string) => {
+  const onChangeLocal = (name: string, value: any) => {
     onValidate(name, value);
     onChange(name, value);
   }
-  const onChangeNetwork = (net: object) => {
+  const onChangeNetwork = (net?: RoamingNetwork) => {
     console.log(net);
-    onChangeLocal('roaming_network_id', net.roaming_network_id)
+    if (net?.roaming_network_id !== undefined && net.roaming_network_id !== null) {
+      onChangeLocal('roaming_network_id', net.roaming_network_id);
+    }
   }
   return (
     <React.Fragment>
@@ -63,19 +66,19 @@ const RoamingRuleAddItem = (props: {
 		{edit ? (
   <TextField
     label={i18n.t('generic.network')}
-    value={(network.find(a => a.roaming_network_id === state.roaming_network_id) || { name: '' }).name}
+    value={(network.find((a: RoamingNetwork) => a.roaming_network_id === state.roaming_network_id) || { name: '' }).name}
     disabled
   />
 ) : (
   <Autocomplete
     loading={networkLoading}
     onChange={(_event, value) => {
-      if (value !== '') {
-        onChangeNetwork(network.find(a => a.roaming_network_id === Number(value.split(" ")[0])));
+      if (value) {
+        onChangeNetwork(network.find((a: RoamingNetwork) => a.roaming_network_id === Number(value.split(" ")[0])));
       }
     }}
-    value={(network.find(a => a.roaming_network_id === state.roaming_network_id) || { name: '' }).name}
-    options={network.map((option) => `${option.roaming_network_id} ${option.name}`)}
+    value={(network.find((a: RoamingNetwork) => a.roaming_network_id === state.roaming_network_id) || { name: '' }).name}
+    options={network.map((option: RoamingNetwork) => `${option.roaming_network_id} ${option.name}`)}
     renderInput={(params) => <TextField {...params} label={`${i18n.t('generic.network')} ${errors.network}`} error={errors.network !== ''} />}
   />
 )}

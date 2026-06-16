@@ -9,9 +9,12 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
 import i18n from '@app/utils/i18n';
+import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
   
 const apnTemplate = {
   "apn": "",
@@ -30,11 +33,21 @@ const apnTemplate = {
 }
 
 const Apn = () => {
-  const [apns, setAPNS] = useState([]);
+  const [apns, setAPNS] = useState<any[]>([]);
   const [dialogData, setDialogData] = useState(apnTemplate);
   const [openAdd, setOpenAdd] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [chargingRules, setChargingRules] = useState([]);
+  const [chargingRules, setChargingRules] = useState<any[]>([]);
+  const {
+    search,
+    page,
+    rowsPerPage,
+    filteredItems,
+    paginatedItems,
+    handleSearchChange,
+    handlePageChange,
+    handleRowsPerPageChange
+  } = useTableSearchPagination(apns);
 
   React.useEffect(() => {
     ApnApi.getAll().then((data => {
@@ -54,7 +67,7 @@ const Apn = () => {
     }))
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = (id: number) => {
     ApnApi.delete(id).then((data) => {
       refresh();
     })
@@ -69,7 +82,7 @@ const Apn = () => {
     setDialogData(apnTemplate);
     refresh();
   }
-  const openEdit = (row) => {
+  const openEdit = (row: any) => {
     setEditMode(true);
     setDialogData(row);
     setOpenAdd(true);
@@ -80,6 +93,19 @@ const Apn = () => {
       <ContentHeader title="Access Point Name" />
       <section className="content">
         <div className="container-fluid">
+          <div className="card">
+            <div className="card-body">
+              <TextField
+                fullWidth
+                id="search-field"
+                label={i18n.t('generic.search')}
+                onChange={handleSearchChange}
+                size="small"
+                value={search}
+                variant="outlined"
+              />
+            </div>
+          </div>
           <div className="card">
             <div className="card-body">
                 <TableContainer component={Paper}>
@@ -98,12 +124,21 @@ const Apn = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {apns.map((row) => (
+                      {paginatedItems.map((row) => (
                         <ApnItem key={row.apn_id} row={row} chargingRules={chargingRules} deleteCallback={handleDelete} openEditCallback={openEdit} />
                       ))}
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <TablePagination
+                  component="div"
+                  count={filteredItems.length}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[10, 25, 50, 100]}
+                />
             </div>
           </div>
         </div>

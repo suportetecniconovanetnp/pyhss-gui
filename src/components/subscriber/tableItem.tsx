@@ -16,12 +16,17 @@ import {NavLink} from 'react-router-dom';
 import Button from '@mui/material/Button';
 import { DeleteDialog } from '@components';
 import i18n from '@app/utils/i18n';
+import {Subscriber} from '@app/types/pyhss';
 
-const SubscriberItem = (props: { row: ReturnType<typeof Object>, deleteCallback: ReturnType<typeof any>, openEditCallback: ReturnType<typeof any> }) => {
+const SubscriberItem = (props: {
+  row: Subscriber,
+  deleteCallback: (id: number) => void,
+  openEditCallback: (row: Subscriber) => void
+}) => {
   const { row, deleteCallback, openEditCallback } = props;
   const [open, setOpen] = React.useState(false);
 
-  const online = ((new Date) - new Date(row.serving_mme_timestamp) < 60 * 60 * 1000)
+  const online = Date.now() - new Date(row.serving_mme_timestamp ?? '').getTime() < 60 * 60 * 1000;
 
 
   return (
@@ -50,7 +55,7 @@ const SubscriberItem = (props: { row: ReturnType<typeof Object>, deleteCallback:
         <TableCell>{row.subscribed_rau_tau_timer}</TableCell>
         <TableCell>
           <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
-          <DeleteDialog id={row.subscriber_id} callback={deleteCallback}/>
+          <DeleteDialog id={row.subscriber_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>
       <TableRow>

@@ -1,15 +1,15 @@
 import React from 'react';
-import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Grid';
 import i18n from '@app/utils/i18n';
 import {InputField, SelectField} from '@components';
+import {ErrorChangeHandler, FormChangeHandler, RoamingNetwork} from '@app/types/pyhss';
 
 
 const RoamingNetworkAddItem = (props: { 
-  onChange: any,
-  state: any,
+  onChange: FormChangeHandler,
+  state: RoamingNetwork,
   edit: boolean, 
-  onError?: ReturnType<typeof Function>
+  onError?: ErrorChangeHandler
 }) => {
 
   const { onChange, state, edit, onError=() => {} } = props;
@@ -32,7 +32,7 @@ const RoamingNetworkAddItem = (props: {
       onError(false);
   }
 
-  const onChangeLocal = (name: string, value: string) => {
+  const onChangeLocal = (name: string, value: any) => {
     onValidate(name, value);
     onChange(name, value);
   }

@@ -33,8 +33,8 @@ const ApnAddItem = (props: { open: ReturnType<typeof Boolean>, handleClose: Retu
        setState(data);
    }, [data]) 
   
-  const handleChange = (name: string, value: string) => {
-    setState(prevState => ({
+  const handleChange = (name: string, value: any) => {
+    setState((prevState: any) => ({
         ...prevState,
         [name]: value
     }));
@@ -120,8 +120,8 @@ const normalizePayload = (payload: any) => {
                 label={i18n.t('inputFields.header.nbiot')}
                 helper={i18n.t('inputFields.desc.nbiot')}
               >
-                <MenuItem value={true}>{i18n.t('generic.yes')}</MenuItem>
-                <MenuItem value={false}>{i18n.t('generic.no')}</MenuItem>
+                <MenuItem value="true">{i18n.t('generic.yes')}</MenuItem>
+                <MenuItem value="false">{i18n.t('generic.no')}</MenuItem>
               </SelectField>
             </Grid>
             <Grid item xs={12}><h3>{i18n.t('apn.gatewayHead')}</h3></Grid>
@@ -216,8 +216,8 @@ const normalizePayload = (payload: any) => {
                 label={i18n.t('inputFields.header.arpPreemptionCapability')}
                 helper={i18n.t('inputFields.desc.arpPreemptionCapability')}
                 >
-                  <MenuItem value={true}>{i18n.t('generic.yes')}</MenuItem>
-                  <MenuItem value={false}>{i18n.t('generic.no')}</MenuItem>
+                  <MenuItem value="true">{i18n.t('generic.yes')}</MenuItem>
+                  <MenuItem value="false">{i18n.t('generic.no')}</MenuItem>
               </SelectField>
             </Grid>
             <Grid item xs={4}>
@@ -228,8 +228,8 @@ const normalizePayload = (payload: any) => {
                 label={i18n.t('inputFields.header.arpPreemptionVulnerability')}
                 helper={i18n.t('inputFields.desc.arpPreemptionVulnerability')}
                 >
-                  <MenuItem value={true}>{i18n.t('generic.yes')}</MenuItem>
-                  <MenuItem value={false}>{i18n.t('generic.no')}</MenuItem>
+                  <MenuItem value="true">{i18n.t('generic.yes')}</MenuItem>
+                  <MenuItem value="false">{i18n.t('generic.no')}</MenuItem>
               </SelectField>
             </Grid>
             {state.nbiot && <> 

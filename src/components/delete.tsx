@@ -15,7 +15,7 @@ const style = {
   p: 4,
 };
 
-const DeleteDialog = (props: { id: ReturnType<typeof Number>, callback: ReturnType<typeof any> }) => {
+const DeleteDialog = (props: { id: number, callback: (id: number) => void }) => {
   const { id, callback } = props;
   const [open, setOpen] = React.useState(false);
 

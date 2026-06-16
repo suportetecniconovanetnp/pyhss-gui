@@ -4,6 +4,7 @@ import {ContentHeader} from '@components';
 import {NavLink} from 'react-router-dom';
 import i18n from '@app/utils/i18n';
 import {OamApi} from "../services/pyhss";
+import {DiameterPeer} from '@app/types/pyhss';
 
 const Dashboard = () => {
   const [subs, setSubs] = React.useState("0");
@@ -25,8 +26,8 @@ const Dashboard = () => {
     });
 
     OamApi.diameterPeers().then(data => {
-      setDiameter(String(Object.values(data.data).filter(item =>
-        item.LastDisconnectTimestamp === ""
+      setDiameter(String(Object.values(data.data).filter((item) =>
+        (item as DiameterPeer).LastDisconnectTimestamp === ""
       ).length));
     });
   };

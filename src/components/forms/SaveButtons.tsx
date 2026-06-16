@@ -3,8 +3,8 @@ import Button from '@mui/material/Button';
 import i18n from '@app/utils/i18n';
 
 const SaveButtons = (props: {
-  onClickSave: ReturnType<typeof Function>,
-  onClickClose: ReturnType<typeof Function>,
+  onClickSave: () => void | Promise<void>,
+  onClickClose: () => void,
   disabled?: boolean
 }) => {
   const {onClickSave, onClickClose, disabled=false} = props;

@@ -52,7 +52,7 @@ const TftGenerator = (props: {
             <SelectField
               required
               value={action}
-              onChange={(name, value) => setAction(value)}
+              onChange={(name, value) => setAction(String(value))}
               id="action"
               label="Action"
               helper=""
@@ -65,7 +65,7 @@ const TftGenerator = (props: {
             <SelectField
               required
               value={direction}
-              onChange={(name, value) => setDirection(value)}
+              onChange={(name, value) => setDirection(String(value))}
               id="direction"
               label="Direction"
               helper=""
@@ -79,7 +79,7 @@ const TftGenerator = (props: {
             <SelectField
               required
               value={protocol}
-              onChange={(name, value) => setProtocol(value)}
+              onChange={(name, value) => setProtocol(String(value))}
               id="protocol"
               label="Protocol"
               helper=""
@@ -95,7 +95,7 @@ const TftGenerator = (props: {
               required
               label="Source"
               id="source"
-              onChange={(name, value) => setSource(value)}
+              onChange={(name, value) => setSource(String(value))}
               value={source}
             >Source IP (CIDR or any)+(port or low-high port range)</InputField>
           </Grid>
@@ -104,7 +104,7 @@ const TftGenerator = (props: {
               required
               label="Destination"
               id="destination"
-              onChange={(name, value) => setDestination(value)}
+              onChange={(name, value) => setDestination(String(value))}
               value={destination}
             >Destination IP (CIDR or any)+(port or low-high port range)</InputField>
           </Grid>

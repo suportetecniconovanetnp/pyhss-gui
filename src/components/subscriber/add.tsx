@@ -7,17 +7,18 @@ import Autocomplete from '@mui/material/Autocomplete';
 import i18n from '@app/utils/i18n';
 import {NetworkBandwidthFormatter, InputField, SelectField} from '@components';
 import {AucApi, ApnApi} from '../../services/pyhss';
+import {Apn, Auc, ErrorChangeHandler, FormChangeHandler, Subscriber} from '@app/types/pyhss';
 
 const SubscriberAddItem = (props: {
-onChange: any, 
-state: any,
-onError?: ReturnType<typeof Function>,
+onChange: FormChangeHandler, 
+state: Subscriber,
+onError?: ErrorChangeHandler,
 wizard?: boolean
 edit?: boolean
 }) => {
   const { onChange, state, onError=()=>{}, wizard=false, edit=false } = props;
-  const [auc, setAuc] = React.useState([]);
-  const [apn, setApn] = React.useState([]);
+  const [auc, setAuc] = React.useState<Auc[]>([]);
+  const [apn, setApn] = React.useState<Apn[]>([]);
   const [aucLoading, setAucLoading] = React.useState(true);
   const [apnLoading, setApnLoading] = React.useState(true);
   const [errors, setErrors ] = React.useState({
@@ -55,41 +56,42 @@ edit?: boolean
     }));
   }
 
-  const onValidate = (field: string, value: string) => {
+  const onValidate = (field: string, value: any) => {
+    const stringValue = value == null ? '' : String(value);
     let error = ""
-    if (field==='imsi' && value === '')
+    if (field==='imsi' && stringValue === '')
       error = i18n.t('validator.required'); 
-    else if (field==='imsi' && !/^\d*$/.test(value))
+    else if (field==='imsi' && !/^\d*$/.test(stringValue))
       error = i18n.t('validator.onlyNumbers'); 
-    else if (field==='imsi' && value.length < 15)
+    else if (field==='imsi' && stringValue.length < 15)
       error = i18n.t('validator.toShort'); 
 
-    if (field==='msisdn' && value === '')
+    if (field==='msisdn' && stringValue === '')
       error = i18n.t('validator.required'); 
-    else if (field==='msisdn' && !/^\d*$/.test(value))
+    else if (field==='msisdn' && !/^\d*$/.test(stringValue))
       error = i18n.t('validator.onlyNumbers'); 
     
-    if (field==='default_apn' && String(value) === '0')
+    if (field==='default_apn' && stringValue === '0')
       error = i18n.t('validator.required'); 
-    else if (field==='default_apn' && !/^\d*$/.test(value))
+    else if (field==='default_apn' && !/^\d*$/.test(stringValue))
       error = i18n.t('validator.onlyNumbers'); 
 
-    if (field==='apn_list' && value === '')
+    if (field==='apn_list' && stringValue === '')
       error = i18n.t('validator.required'); 
-    else if (field==='apn_list' && !/^[1-8]*(,[1-8]*)*$/.test(value))
+    else if (field==='apn_list' && !/^[1-8]*(,[1-8]*)*$/.test(stringValue))
       error = i18n.t('validator.onlyCSV'); 
 
-    if (field==='ue_ambr_ul' && String(value) === '0')
+    if (field==='ue_ambr_ul' && stringValue === '0')
       error = i18n.t('validator.required'); 
-    else if (field==='ue_ambr_ul' && !/^\d*$/.test(value))
+    else if (field==='ue_ambr_ul' && !/^\d*$/.test(stringValue))
       error = i18n.t('validator.onlyNumbers'); 
 
-    if (field==='ue_ambr_dl' && String(value) === '0')
+    if (field==='ue_ambr_dl' && stringValue === '0')
       error = i18n.t('validator.required'); 
-    else if (field==='ue_ambr_dl' && !/^\d*$/.test(value))
+    else if (field==='ue_ambr_dl' && !/^\d*$/.test(stringValue))
       error = i18n.t('validator.onlyNumbers'); 
 
-    else if (field==='roaming_rule_list' && !/^[1-8]*(,[1-8]*)*$/.test(value) && value !== null)
+    else if (field==='roaming_rule_list' && !/^[1-8]*(,[1-8]*)*$/.test(stringValue) && value !== null)
       error = i18n.t('validator.onlyCSV'); 
 
     setError(field, error);
@@ -100,27 +102,39 @@ edit?: boolean
       onError(false);
   }
 
-  const onChangeLocal = (name: string, value: string) => {
+  const onChangeLocal = (name: string, value: any) => {
     onValidate(name, value);
     onChange(name, value);
   }
 
-  const onChangeAuc = (auc: object) => {
-    onChange('imsi', auc.imsi);
-    onChange('auc_id', auc.auc_id);
-    onValidate('imsi', auc.imsi);
+  const onChangeAuc = (aucItem?: Auc) => {
+    if (!aucItem || aucItem.auc_id === undefined) {
+      return;
+    }
+
+    onChange('imsi', aucItem.imsi);
+    onChange('auc_id', aucItem.auc_id);
+    onValidate('imsi', aucItem.imsi);
   }
 
-  const onChangeDefaultApn = (apn: object) => {
-    onChangeLocal('default_apn', apn.apn_id)
+  const onChangeDefaultApn = (apnItem?: Apn) => {
+    if (!apnItem || apnItem.apn_id === undefined) {
+      return;
+    }
+
+    onChangeLocal('default_apn', String(apnItem.apn_id))
     if (state.apn_list === '')
-      onChange('apn_list', '' + apn.apn_id);
+      onChange('apn_list', '' + apnItem.apn_id);
     else
-      onChange('apn_list', state.apn_list + ',' + apn.apn_id)
+      onChange('apn_list', state.apn_list + ',' + apnItem.apn_id)
   }
 
-  const onChangeApn = (apns) => {
-    onChangeLocal('apn_list',apn.filter((a) => apns.includes(a.apn)).map((a) => a.apn_id).join(','));
+  const onChangeApn = (apns: string[]) => {
+    onChangeLocal('apn_list', apn
+      .filter((a: Apn) => apns.includes(a.apn))
+      .map((a: Apn) => a.apn_id)
+      .filter((id): id is number => id !== undefined)
+      .join(','));
   }
 
   return (
@@ -130,13 +144,13 @@ edit?: boolean
               <Autocomplete
                 loading={aucLoading}
                 onChange={(_event, value) => {
-                  if (value > 0) {
-                    onChangeAuc(auc.find(a => a.imsi === value));
+                  if (value) {
+                    onChangeAuc(auc.find((a: Auc) => a.imsi === value));
                   }
                 }}
-                value={(auc.find(a => a.auc_id === state.auc_id) || {'imsi':''}).imsi}
+                value={(auc.find((a: Auc) => a.auc_id === state.auc_id) || {'imsi':''}).imsi}
                 disabled={wizard || edit}
-                options={auc.map((option) => option.imsi)}
+                options={auc.map((option: Auc) => option.imsi)}
                 renderInput={(params) => <TextField {...params} label={`IMSI ${errors.imsi}`} error={errors.imsi!==''} />}
               />
             </Grid>
@@ -157,25 +171,25 @@ edit?: boolean
                 label={i18n.t('generic.enabled')}
                 helper={i18n.t('inputFields.desc.subscriberEnabled')}
               >
-                <MenuItem value={true}>{i18n.t('generic.yes')}</MenuItem>
-                <MenuItem value={false}>{i18n.t('generic.no')}</MenuItem>
+                <MenuItem value="true">{i18n.t('generic.yes')}</MenuItem>
+                <MenuItem value="false">{i18n.t('generic.no')}</MenuItem>
               </SelectField>
             </Grid>
             <Grid item xs={3}>
               <SelectField
-                value={state.roaming_enabled}
+                value={state.roaming_enabled ?? false}
                 onChange={onChange}
                 id="roaming_enabled"
                 label={i18n.t('inputFields.header.roaming')}
                 helper={i18n.t('inputFields.desc.subscriberRoamingEnabled')}
               >
-                <MenuItem value={true}>{i18n.t('generic.yes')}</MenuItem>
-                <MenuItem value={false}>{i18n.t('generic.no')}</MenuItem>
+                <MenuItem value="true">{i18n.t('generic.yes')}</MenuItem>
+                <MenuItem value="false">{i18n.t('generic.no')}</MenuItem>
               </SelectField>
             </Grid>
             <Grid item xs={3}>
               <InputField
-                value={state.roaming_rule_list}
+                value={state.roaming_rule_list ?? ''}
                 error={errors.roaming_rule_list}
                 onChange={onChangeLocal}
                 id="roaming_rule_list"
@@ -199,12 +213,12 @@ edit?: boolean
               <Autocomplete
                 loading={apnLoading}
                 onChange={(_event, value) => {
-                  if (value !== '') {
-                    onChangeDefaultApn(apn.find(a => a.apn === value));
+                  if (value) {
+                    onChangeDefaultApn(apn.find((a: Apn) => a.apn === value));
                   }
                 }}
-                value={(apn.find(a => a.apn_id === state.default_apn) || {'apn':''}).apn}
-                options={apn.map((option) => option.apn)}
+                value={(apn.find((a: Apn) => a.apn_id === state.default_apn) || {'apn':''}).apn}
+                options={apn.map((option: Apn) => option.apn)}
                 renderInput={(params) => <TextField {...params} label={`${i18n.t('inputFields.header.defaultAPN')} ${errors.default_apn}`} error={errors.default_apn!==''} />}
               />
             </Grid>
@@ -217,8 +231,8 @@ edit?: boolean
                     onChangeApn(value);
                   }
                 }}
-                value={apn.filter((a) => state.apn_list.split(",").includes(String(a.apn_id))).map((a)=> a.apn)}
-                options={apn.map((option) => option.apn)}
+                value={apn.filter((a: Apn) => state.apn_list.split(",").includes(String(a.apn_id))).map((a: Apn)=> a.apn)}
+                options={apn.map((option: Apn) => option.apn)}
                 renderInput={(params) => <TextField {...params} label={`APNs ${errors.apn_list}`} error={errors.apn_list!==''} />}
               />
             </Grid>

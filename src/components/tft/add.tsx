@@ -8,6 +8,7 @@ import {SelectField, SaveButtons, InputField, TftGenerator} from '@components';
 import i18n from '@app/utils/i18n';
 
 import {TftApi} from '../../services/pyhss';
+import {FormValue, Tft} from '@app/types/pyhss';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -23,19 +24,19 @@ const style = {
 
 const TftAddItem = (props: {
   open: boolean,
-  handleClose: ReturnType<typeof any>,
-  data: ReturnType<typeof Object>,
+  handleClose: () => void,
+  data: Tft,
   edit: boolean
 }) => {
   const { open, handleClose, data, edit } = props;
-  const [state, setState] = useState(data);
+  const [state, setState] = useState<Tft>(data);
 
   React.useEffect(() => {
     setState(data);
   }, [data])
 
-  const handleChange = (name: string, value: string) => {
-    setState(prevState => ({
+  const handleChange = (name: string, value: FormValue) => {
+    setState((prevState: Tft) => ({
       ...prevState,
       [name]: value
     }));
@@ -43,7 +44,7 @@ const TftAddItem = (props: {
 
   const handleSave = () => {
     if (edit) {
-      TftApi.update(data.tft_id, state).then((data) => {
+      TftApi.update(data.tft_id!, state).then((data) => {
         handleLocalClose();
       });
     } else {

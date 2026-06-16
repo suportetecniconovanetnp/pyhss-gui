@@ -5,6 +5,7 @@ import i18n from '@app/utils/i18n';
 import {SubscriberAddItem,SaveButtons} from '@components';
 
 import {SubscriberApi, OamApi} from '../../services/pyhss';
+import {FormValue, Subscriber} from '@app/types/pyhss';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -18,17 +19,17 @@ const style = {
   p: 4,
 };
 
-const SubscriberAddModal = (props: { open: boolean, handleClose: ReturnType<typeof any>, data: ReturnType<typeof Object>, edit: boolean }) => {
+const SubscriberAddModal = (props: { open: boolean, handleClose: () => void, data: Subscriber, edit: boolean }) => {
   const { open, handleClose, data, edit } = props;
-  const [state, setState] = React.useState(data);
+  const [state, setState] = React.useState<Subscriber>(data);
   const [error, setError] = React.useState(true);
 
    React.useEffect(() => {
        setState(data);
    }, [data])
 
-  const handleChange = (name: string, value: string) => {
-    setState(prevState => ({
+  const handleChange = (name: string, value: FormValue) => {
+    setState((prevState: Subscriber) => ({
         ...prevState,
         [name]: value
     }));
@@ -63,7 +64,7 @@ const SubscriberAddModal = (props: { open: boolean, handleClose: ReturnType<type
   };
 
     if (edit) {
-      SubscriberApi.update(data.subscriber_id, item).then((data) => {
+      SubscriberApi.update(data.subscriber_id!, item).then((data) => {
         handleLocalClose();
       });
     } else {

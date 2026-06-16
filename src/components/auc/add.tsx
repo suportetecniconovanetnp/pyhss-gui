@@ -132,8 +132,8 @@ const AucAddItem = (props: {
                   label={i18n.t('inputFields.header.esim')}
                   helper={i18n.t('inputFields.desc.esim')}
                 >
-                  <MenuItem value={true}>{i18n.t('generic.yes')}</MenuItem>
-                  <MenuItem value={false}>{i18n.t('generic.no')}</MenuItem>
+                  <MenuItem value="true">{i18n.t('generic.yes')}</MenuItem>
+                  <MenuItem value="false">{i18n.t('generic.no')}</MenuItem>
                 </SelectField>
               </Grid>
               <Grid item xs={3}>

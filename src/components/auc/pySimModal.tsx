@@ -9,6 +9,7 @@ import Highlight from 'react-highlight.js';
 import {InputField, SelectField} from '@components';
 import {ImsSubscriberApi} from "../../services/pyhss";
 import axios from "axios";
+import {Auc, FormValue, ImsSubscriber} from '@app/types/pyhss';
 
 const style = {
   position: 'absolute',
@@ -27,18 +28,23 @@ const style = {
 };
 
 
-const AucPySimModal = (props: { open: boolean, handleClose: any, rows: object }) => {
+const AucPySimModal = (props: { open: boolean, handleClose: () => void, rows: Auc[] }) => {
   const { open, handleClose, rows } = props;
-  const [state, setState] = useState({'options':'','mncLength':2,'networkName':'TestCore','smsc':'','dryrun': false});
-  const [output, setOutput] = useState([]);
+  const [state, setState] = useState({options:'', mncLength:2, networkName:'TestCore', smsc:'', dryrun: false});
+  const [output, setOutput] = useState<string[]>([]);
   const [help, setHelp] = useState(false);
-  const [ims, setIms] = useState([]);
+  const [ims, setIms] = useState<ImsSubscriber[]>([]);
 
   React.useEffect(() => {
-    ImsSubscriberApi.findManyByImsi(rows.map(a => a.imsi))
+    ImsSubscriberApi.findManyByImsi(rows.map((a: Auc) => a.imsi))
     .then(
       axios.spread((...allData) => {
-        setIms(allData.filter(a=>a.statusText==="OK").map(a=> a.data));
+        setIms(
+          allData
+            .filter((a) => a.statusText === "OK" && 'data' in a)
+            .map((a) => ('data' in a ? a.data : undefined))
+            .filter(Boolean)
+        );
       })
     )
   }, [rows]);
@@ -48,7 +54,7 @@ const AucPySimModal = (props: { open: boolean, handleClose: any, rows: object })
     setOutput([]);
   }
 
-  const onChange = (name: string, value: string) => {
+  const onChange = (name: string, value: FormValue) => {
     setOutput([]);
     setState((prevState) => ({
       ...prevState,
@@ -57,9 +63,10 @@ const AucPySimModal = (props: { open: boolean, handleClose: any, rows: object })
   }
 
   const onOutput = (dryrun: boolean) => {
-    setOutput(rows.filter(row=>row.adm1 !== '').map((row) => {
+    setOutput(rows.filter((row: Auc) => row.adm1 !== '').map((row: Auc) => {
       const mcc = String(row.imsi.substring(0,3))
       const mnc = String(row.imsi.substring(3, Number(state.mncLength) + 3))
+      const imsMatch = ims.find((a) => a.imsi === row.imsi);
       return `read -p "Press Enter to start with ${row.imsi}/${row.iccid}"\n` + 
       `./pySim-prog.py` +
       (dryrun ?` --dryrun`:'') +
@@ -69,7 +76,7 @@ const AucPySimModal = (props: { open: boolean, handleClose: any, rows: object })
       ` --impu=sip:${row.imsi}@ims.mnc${(mnc.length < 3?'0'+mnc:mnc)}.mcc${mcc}.3gppnetwork.org` +
       ` --pcscf=pcscf.ims.mnc${(mnc.length < 3?'0'+mnc:mnc)}.mcc${mcc}.3gppnetwork.org` + 
       ` --ims-hdomain=ims.mnc${(mnc.length < 3?'0'+mnc:mnc)}.mcc${mcc}.3gppnetwork.org` +
-      (ims.find(a => a.imsi === row.imsi)?` --msisdn=${ims.find(a=>a.imsi === row.imsi).msisdn}`:'') +
+      (imsMatch ? ` --msisdn=${imsMatch.msisdn}` : '') +
       (state.smsc !== ''?` -m ${state.smsc}`:'') +
       (state.options !== '' ? ` ${state.options}`:'')
     }));

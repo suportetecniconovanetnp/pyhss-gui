@@ -4,8 +4,15 @@ import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 import { DeleteDialog } from '@components';
 import i18n from '@app/utils/i18n';
+import {RoamingNetwork} from '@app/types/pyhss';
 
-const RoamingNetworkItem = (props: { row: ReturnType<typeof Object>, deleteCallback: ReturnType<typeof any>, openEditCallback: ReturnType<typeof any>, checkboxCallback: any, checked: boolean }) => {
+const RoamingNetworkItem = (props: {
+  row: RoamingNetwork,
+  deleteCallback: (id: number) => void,
+  openEditCallback: (row: RoamingNetwork) => void,
+  checkboxCallback?: unknown,
+  checked: boolean
+}) => {
   const { row, deleteCallback, openEditCallback } = props;
 
   return (
@@ -20,7 +27,7 @@ const RoamingNetworkItem = (props: { row: ReturnType<typeof Object>, deleteCallb
         <TableCell>{row.preference}</TableCell>
         <TableCell>
           <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
-          <DeleteDialog id={row.roaming_network_id} callback={deleteCallback}/>
+          <DeleteDialog id={row.roaming_network_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>
     </React.Fragment>

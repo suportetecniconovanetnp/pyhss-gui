@@ -7,12 +7,14 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
 import i18n from '@app/utils/i18n';
+import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
 
 const subscriberTemplate = {
   "imsi": "",
@@ -34,18 +36,23 @@ const Subscriber = () => {
   const [dialogData, setDialogData] = React.useState(subscriberTemplate);
   const [openAdd, setOpenAdd] = React.useState(false);
   const [editMode, setEditMode] = React.useState(false);
-  const [subscribers, setSubscribers] = React.useState([]);
-  const [search, setSearch] = React.useState("");
+  const [subscribers, setSubscribers] = React.useState<any[]>([]);
+  const {
+    search,
+    page,
+    rowsPerPage,
+    filteredItems,
+    paginatedItems,
+    handleSearchChange,
+    handlePageChange,
+    handleRowsPerPageChange
+  } = useTableSearchPagination(subscribers);
 
   React.useEffect(() => {
     SubscriberApi.getAll().then((data => {
         setSubscribers(data.data)
     }))
   }, []);
-
-  const onSearchHandler = event => {
-   setSearch(event.target.value);
-  };
 
   const refresh = () => {
     SubscriberApi.getAll().then((data => {
@@ -69,7 +76,7 @@ const Subscriber = () => {
     setDialogData(subscriberTemplate);
     refresh();
   }
-  const openEdit = (row) => {
+  const openEdit = (row: any) => {
     setEditMode(true);
     setDialogData(row);
     setOpenAdd(true);
@@ -81,7 +88,17 @@ const Subscriber = () => {
       <section className="content">
         <div className="container-fluid">
           <div className="card">
-            <TextField id="search-field" label="Search" variant="outlined"  onChange={onSearchHandler} value={search} />
+            <div className="card-body">
+              <TextField
+                fullWidth
+                id="search-field"
+                label={i18n.t('generic.search')}
+                onChange={handleSearchChange}
+                size="small"
+                value={search}
+                variant="outlined"
+              />
+            </div>
           </div>
           <div className="card">
             <div className="card-body">
@@ -104,16 +121,21 @@ const Subscriber = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {subscribers.filter(row => {
-                          if (search === "") return row;
-                          else if (row.imsi.includes(search)) return row; 
-                          else if (row.msisdn.includes(search)) return row; 
-                        }).map((row) => (
+                      {paginatedItems.map((row) => (
                         <SubscriberItem key={row.subscriber_id} row={row} deleteCallback={handleDelete} openEditCallback={openEdit}/>
                       ))}
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <TablePagination
+                  component="div"
+                  count={filteredItems.length}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[10, 25, 50, 100]}
+                />
             </div>
           </div>
         </div>

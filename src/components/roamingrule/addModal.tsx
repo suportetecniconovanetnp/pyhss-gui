@@ -9,6 +9,7 @@ import {SaveButtons} from '@components';
 import RoamingRuleAddItem from './add';
 
 import {RoamingRuleApi} from '../../services/pyhss';
+import {FormValue, RoamingRule} from '@app/types/pyhss';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -23,18 +24,23 @@ const style = {
 };
 
 
-const RoamingRuleAddModal = (props: { open: boolean, handleClose: any, data: object, edit: boolean, onError: Function }) => {
+const RoamingRuleAddModal = (props: {
+  open: boolean,
+  handleClose: () => void,
+  data: RoamingRule,
+  edit: boolean,
+  onError: (error: unknown) => void
+}) => {
   const { open, handleClose, data, edit, onError = () => {} } = props;
-  const [state, setState] = React.useState(data);
+  const [state, setState] = React.useState<RoamingRule>(data);
   const [error, setError] = React.useState(true);
-  const [forceKeys, setForceKeys] = React.useState(false);
 
   React.useEffect(() => {
       setState(data);
   }, [data])
  
-  const handleChange = (name: string, value: any) => {
-  setState((prevState) => ({
+  const handleChange = (name: string, value: FormValue) => {
+  setState((prevState: RoamingRule) => ({
     ...prevState,
     [name]: value,
   	}));
@@ -43,7 +49,7 @@ const RoamingRuleAddModal = (props: { open: boolean, handleClose: any, data: obj
 
   const handleSave = () => {
     if (edit) {
-      RoamingRuleApi.update(data.roaming_rule_id, state).then((data) => {
+      RoamingRuleApi.update(data.roaming_rule_id!, state).then((data) => {
         handleLocalClose();
       }).catch(err => {
       })
@@ -59,7 +65,6 @@ const RoamingRuleAddModal = (props: { open: boolean, handleClose: any, data: obj
   }
 
   const handleLocalClose = () => {
-    setForceKeys(false);
     handleClose();
   }
 
@@ -82,9 +87,9 @@ const RoamingRuleAddModal = (props: { open: boolean, handleClose: any, data: obj
             noValidate
             autoComplete="off"
           >
-            <RoamingRuleAddItem onChange={handleChange} state={state} forceKeys={forceKeys} edit={edit} onError={handleError}/>
+            <RoamingRuleAddItem onChange={handleChange} state={state} edit={edit} onError={handleError}/>
           </Box>
-          <SaveButtons onClickClose={handleLocalClose} onClickSave={handleSave}/>
+          <SaveButtons onClickClose={handleLocalClose} onClickSave={handleSave} disabled={error}/>
         </Box>
       </Modal>
     </React.Fragment>

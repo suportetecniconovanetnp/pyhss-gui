@@ -9,12 +9,15 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Toolbar from '@mui/material/Toolbar';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 import { useSearchParams } from "react-router-dom";
 import i18n from '@app/utils/i18n';
+import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
 
 const aucTemplate = {
   "ki": "",
@@ -42,7 +45,7 @@ const aucTemplate = {
 }
 
 const Auc = () => {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<any[]>([]);
   const [openAdd, setOpenAdd] = useState(false);
   const [openPySim, setOpenPySim] = useState(false);
   const [searchParams] = useSearchParams();
@@ -50,13 +53,23 @@ const Auc = () => {
   const [editMode, setEditMode] = useState(false);
   const [error, setError] = useState('');
   const [selected, setSelected] = React.useState<readonly number[]>([]);
-  const [pySimItems, setPySimItems] = useState([]);
+  const [pySimItems, setPySimItems] = useState<any[]>([]);
+  const {
+    search,
+    page,
+    rowsPerPage,
+    filteredItems,
+    paginatedItems,
+    handleSearchChange,
+    handlePageChange,
+    handleRowsPerPageChange
+  } = useTableSearchPagination(items);
 
   const aucSearch = searchParams.get('auc');
 
   React.useEffect(() => {
     if (aucSearch) {
-      AucApi.get(aucSearch).then((data => {
+      AucApi.get(Number(aucSearch)).then((data => {
         setItems([data.data])
       }));
     } else {
@@ -68,7 +81,7 @@ const Auc = () => {
 
   const refresh = () => {
     if (aucSearch) {
-      AucApi.get(aucSearch).then((data => {
+      AucApi.get(Number(aucSearch)).then((data => {
         setItems([data.data])
       }));
     } else {
@@ -98,14 +111,14 @@ const Auc = () => {
     setOpenAdd(false);
     refresh();
   }
-  const openEdit = (row: object) => {
+  const openEdit = (row: any) => {
     setEditMode(true);
     setDialogData(row);
     setOpenAdd(true);
   }
 
-  const handleError = (err:string) => {
-    setError(err);
+  const handleError = (err: unknown) => {
+    setError(String(err));
   }
 
   const handlePySimClose = () => {
@@ -115,8 +128,8 @@ const Auc = () => {
     setOpenPySim(true);
   }
 
-  const checkboxCallback = (i) => {
-    const id = Number(i.target.id);
+  const checkboxCallback = (i: React.MouseEvent<HTMLInputElement>) => {
+    const id = Number(i.currentTarget.id);
     const selectedIndex = selected.indexOf(id);
     let newSelected: readonly number[] = [];
 
@@ -143,6 +156,21 @@ const Auc = () => {
       <ContentHeader title={(aucSearch?'AUC':'Authentication Center')} />
       <section className="content">
         <div className="container-fluid">
+          {!aucSearch && (
+          <div className="card">
+            <div className="card-body">
+              <TextField
+                fullWidth
+                id="search-field"
+                label={i18n.t('generic.search')}
+                onChange={handleSearchChange}
+                size="small"
+                value={search}
+                variant="outlined"
+              />
+            </div>
+          </div>
+          )}
           <div className="card">
             <div className="card-body">
                 {selected.length > 0 && (<Toolbar><Button onClick={handlePySimOpen}>PySim</Button></Toolbar>)}
@@ -161,12 +189,23 @@ const Auc = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {items.map((row) => (
+                      {(aucSearch ? items : paginatedItems).map((row) => (
                         <AucItem checked={isChecked(row.auc_id)} checkboxCallback={checkboxCallback} key={row.auc_id} row={row} single={(aucSearch?true:false)} deleteCallback={handleDelete} openEditCallback={openEdit}/>
                       ))}
                     </TableBody>
                   </Table>
                 </TableContainer>
+                {!aucSearch && (
+                <TablePagination
+                  component="div"
+                  count={filteredItems.length}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[10, 25, 50, 100]}
+                />
+                )}
             </div>
           </div>
         </div>

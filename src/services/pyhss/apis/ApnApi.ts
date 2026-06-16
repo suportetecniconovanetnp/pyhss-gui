@@ -1,19 +1,25 @@
 import http from "../http-common";
+import {Apn, ListQueryParams} from '@app/types/pyhss';
 
 class ApnApi {
-  getAll() {
-    return http.get("/apn/list");
+  getAll(params: ListQueryParams = {}) {
+    return http.get("/apn/list", {
+      params: {
+        page: params.page ?? 0,
+        page_size: params.pageSize ?? 200
+      }
+    });
   }
 
   get(id: number) {
     return http.get(`/apn/${id}`);
   }
 
-  create(data: object) {
+  create(data: Apn) {
     return http.put("/apn/", data);
   }
 
-  update(id: number, data: object) {
+  update(id: number, data: Partial<Apn>) {
     return http.patch(`/apn/${id}`, data);
   }
 

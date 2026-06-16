@@ -1,19 +1,25 @@
 import http from "../http-common";
+import {ListQueryParams, Subscriber} from '@app/types/pyhss';
 
 class SubscriberApi {
-  getAll() {
-    return http.get("/subscriber/list");
+  getAll(params: ListQueryParams = {}) {
+    return http.get("/subscriber/list", {
+      params: {
+        page: params.page ?? 0,
+        page_size: params.pageSize ?? 200
+      }
+    });
   }
 
   get(id: number) {
     return http.get(`/subscriber/${id}`);
   }
 
-  create(data: object) {
+  create(data: Subscriber) {
     return http.put("/subscriber/", data);
   }
 
-  update(id: number, data: object) {
+  update(id: number, data: Partial<Subscriber>) {
     return http.patch(`/subscriber/${id}`, data);
   }
 
@@ -26,10 +32,10 @@ class SubscriberApi {
   }
 
   findByImsi(imsi: string) {
-    return http.get(`/subscriber/ims_subscriber_imsi/${imsi}`);
+    return http.get(`/subscriber/imsi/${imsi}`);
   }
 
-  findManyByImsi(imsis: object) {
+  findManyByImsi(imsis: string[]) {
     return Promise.all(imsis.map((imsi: string) => this.findByImsi(imsi)
         .catch(function() {
           return { statusText: 'FAILED' };

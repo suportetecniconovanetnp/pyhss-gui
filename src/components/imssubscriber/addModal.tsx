@@ -6,6 +6,7 @@ import i18n from '@app/utils/i18n';
 import {ImsSubscriberAddItem, SaveButtons} from '@components';
 
 import {ImsSubscriberApi} from '../../services/pyhss';
+import {FormValue, ImsSubscriber} from '@app/types/pyhss';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -21,20 +22,20 @@ const style = {
 
 const ImsSubscriberAddModal = (props: {
   open: boolean,
-  handleClose: any,
-  data: object,
+  handleClose: () => void,
+  data: ImsSubscriber,
   edit: boolean,
 }) => {
   const { open, handleClose, data, edit } = props;
-  const [state, setState] = React.useState(data);
+  const [state, setState] = React.useState<ImsSubscriber>(data);
   const [error, setError] = React.useState(true);
 
   React.useEffect(() => {
       setState(data);
   }, [data])
 
-  const handleChange = (name: string, value: string) => {
-    setState(prevState => ({
+  const handleChange = (name: string, value: FormValue) => {
+    setState((prevState: ImsSubscriber) => ({
         ...prevState,
         [name]: value
     }));
@@ -42,7 +43,7 @@ const ImsSubscriberAddModal = (props: {
 
   const handleSave = () => {
     if (edit) {
-      ImsSubscriberApi.update(data.ims_subscriber_id, state).then((data) => {
+      ImsSubscriberApi.update(data.ims_subscriber_id!, state).then((data) => {
         handleLocalClose();
       })
     } else {

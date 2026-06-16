@@ -5,13 +5,13 @@ import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Grid';
 import i18n from '@app/utils/i18n';
 import {
-  NetworkBandwidthFormatter,
   InputField,
   SelectField,
   SaveButtons,
 } from '@components';
 
 import {EirApi} from '../../services/pyhss';
+import {Eir, FormValue} from '@app/types/pyhss';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -25,16 +25,16 @@ const style = {
   p: 4,
 };
 
-const EirAddItem = (props: { open: ReturnType<typeof Boolean>, handleClose: ReturnType<typeof Function>, data: ReturnType<typeof Object>, edit: ReturnType<typeof Boolean> }) => {
+const EirAddItem = (props: { open: boolean, handleClose: () => void, data: Eir, edit: boolean }) => {
   const { open, handleClose, data, edit } = props;
-  const [state, setState] = React.useState(data);
+  const [state, setState] = React.useState<Eir>(data);
 
    React.useEffect(() => {
        setState(data);
    }, [data]) 
   
-  const handleChange = (name: string, value: string) => {
-    setState(prevState => ({
+  const handleChange = (name: string, value: FormValue) => {
+    setState((prevState: Eir) => ({
         ...prevState,
         [name]: value
     }));
@@ -42,7 +42,7 @@ const EirAddItem = (props: { open: ReturnType<typeof Boolean>, handleClose: Retu
 
   const handleSave = () => {
     if (edit) {
-      EirApi.update(data.eir_id, state).then(() => {
+      EirApi.update(data.eir_id!, state).then(() => {
         handleClose();
       })
     } else {
@@ -75,7 +75,7 @@ const EirAddItem = (props: { open: ReturnType<typeof Boolean>, handleClose: Retu
             <Grid item xs={4}>
               <InputField
                 required
-                value={state.imei}
+                value={state.imei ?? ''}
                 onChange={handleChange}
                 id="imei"
                 label={i18n.t('inputFields.header.imei')}
@@ -84,7 +84,7 @@ const EirAddItem = (props: { open: ReturnType<typeof Boolean>, handleClose: Retu
             <Grid item xs={5}>
               <InputField
                 required
-                value={state.imsi}
+                value={state.imsi ?? ''}
                 onChange={handleChange}
                 id="imsi"
                 label={i18n.t('inputFields.header.imsi')}
@@ -95,27 +95,27 @@ const EirAddItem = (props: { open: ReturnType<typeof Boolean>, handleClose: Retu
             <Grid item xs={12}><h3>{i18n.t('eir.mode')}</h3></Grid>
             <Grid item xs={3}>
 	     <SelectField
-  	     value={state.regex_mode}
-  	     onChange={handleChange}
+ 	     value={state.regex_mode ?? ''}
+ 	     onChange={handleChange}
              id="regex_mode"
              label={i18n.t('inputFields.header.regex_mode')}
              helper={i18n.t('inputFields.desc.regex_mode')}
 	     >
- 	     <MenuItem value={0}>exact matching</MenuItem>
-             <MenuItem value={1}>loose matching</MenuItem>
+ 	     <MenuItem value="0">exact matching</MenuItem>
+             <MenuItem value="1">loose matching</MenuItem>
             </SelectField>
             </Grid>
             <Grid item xs={4}>
 		<SelectField
- 		 value={state.match_response_code}
+ 		 value={state.match_response_code ?? ''}
  		 onChange={handleChange}
  		 id="match_response_code"
  		 label={i18n.t('inputFields.header.match_response_code')}
  		 helper={i18n.t('inputFields.desc.match_response_code')}
 		>
- 		 <MenuItem value={0}>Whitelist</MenuItem>
- 		 <MenuItem value={1}>Blacklist</MenuItem>
- 		 <MenuItem value={2}>Greylist</MenuItem>
+ 		 <MenuItem value="0">Whitelist</MenuItem>
+ 		 <MenuItem value="1">Blacklist</MenuItem>
+ 		 <MenuItem value="2">Greylist</MenuItem>
 		</SelectField>
             </Grid>
           </Grid>

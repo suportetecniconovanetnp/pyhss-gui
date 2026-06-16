@@ -9,6 +9,7 @@ import {SaveButtons} from '@components';
 import RoamingNetworkAddItem from './add';
 
 import {RoamingNetworkApi} from '../../services/pyhss';
+import {FormValue, RoamingNetwork} from '@app/types/pyhss';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -23,18 +24,23 @@ const style = {
 };
 
 
-const RoamingNetworkAddModal = (props: { open: boolean, handleClose: any, data: object, edit: boolean, onError: Function }) => {
+const RoamingNetworkAddModal = (props: {
+  open: boolean,
+  handleClose: () => void,
+  data: RoamingNetwork,
+  edit: boolean,
+  onError: (error: unknown) => void
+}) => {
   const { open, handleClose, data, edit, onError = () => {} } = props;
-  const [state, setState] = React.useState(data);
+  const [state, setState] = React.useState<RoamingNetwork>(data);
   const [error, setError] = React.useState(true);
-  const [forceKeys, setForceKeys] = React.useState(false);
 
   React.useEffect(() => {
       setState(data);
   }, [data])
 
-  const handleChange = (name:string, value:string) => {
-    setState((prevState) => ({
+  const handleChange = (name:string, value: FormValue) => {
+    setState((prevState: RoamingNetwork) => ({
         ...prevState,
         [name]: value
     }));
@@ -42,7 +48,7 @@ const RoamingNetworkAddModal = (props: { open: boolean, handleClose: any, data: 
 
   const handleSave = () => {
     if (edit) {
-      RoamingNetworkApi.update(data.roaming_network_id, state).then((data) => {
+      RoamingNetworkApi.update(data.roaming_network_id!, state).then((data) => {
         handleLocalClose();
       }).catch(err => {
         onError(err);
@@ -58,7 +64,6 @@ const RoamingNetworkAddModal = (props: { open: boolean, handleClose: any, data: 
   }
 
   const handleLocalClose = () => {
-    setForceKeys(false);
     handleClose();
   }
 
@@ -81,7 +86,7 @@ const RoamingNetworkAddModal = (props: { open: boolean, handleClose: any, data: 
             noValidate
             autoComplete="off"
           >
-            <RoamingNetworkAddItem onChange={handleChange} state={state} forceKeys={forceKeys} edit={edit} onError={handleError}/>
+            <RoamingNetworkAddItem onChange={handleChange} state={state} edit={edit} onError={handleError}/>
           </Box>
           <SaveButtons onClickClose={handleLocalClose} onClickSave={handleSave} disabled={error}/>
         </Box>

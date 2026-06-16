@@ -9,9 +9,12 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
 import i18n from '@app/utils/i18n';
+import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
 
 const charging_ruleTemplate = {
   "rule_name": "",
@@ -29,10 +32,20 @@ const charging_ruleTemplate = {
 }
 
 const ChargingRule = () => {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<any[]>([]);
   const [openAdd, setOpenAdd] = useState(false);
   const [dialogData, setDialogData] = useState(charging_ruleTemplate);
   const [editMode, setEditMode] = useState(false);
+  const {
+    search,
+    page,
+    rowsPerPage,
+    filteredItems,
+    paginatedItems,
+    handleSearchChange,
+    handlePageChange,
+    handleRowsPerPageChange
+  } = useTableSearchPagination(items);
 
   React.useEffect(() => {
     ChargingRuleApi.getAll().then((data => {
@@ -46,7 +59,7 @@ const ChargingRule = () => {
     }));
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = (id: number) => {
     ChargingRuleApi.delete(id).then((data) => {
       console.log(id, data);
       refresh();
@@ -62,7 +75,7 @@ const ChargingRule = () => {
     setDialogData(charging_ruleTemplate);
     refresh();
   }
-  const openEdit = (row) => {
+  const openEdit = (row: any) => {
     setEditMode(true);
     setDialogData(row);
     setOpenAdd(true);
@@ -73,6 +86,19 @@ const ChargingRule = () => {
       <ContentHeader title="Charging Rules" />
       <section className="content">
         <div className="container-fluid">
+          <div className="card">
+            <div className="card-body">
+              <TextField
+                fullWidth
+                id="search-field"
+                label={i18n.t('generic.search')}
+                onChange={handleSearchChange}
+                size="small"
+                value={search}
+                variant="outlined"
+              />
+            </div>
+          </div>
           <div className="card">
             <div className="card-body">
                 <TableContainer component={Paper}>
@@ -97,12 +123,21 @@ const ChargingRule = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {items.map((row) => (
-                        <ChargingRuleItem key={row.tft_id} row={row} deleteCallback={handleDelete} openEditCallback={openEdit} />
+                      {paginatedItems.map((row) => (
+                        <ChargingRuleItem key={row.charging_rule_id} row={row} deleteCallback={handleDelete} openEditCallback={openEdit} />
                       ))}
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <TablePagination
+                  component="div"
+                  count={filteredItems.length}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[10, 25, 50, 100]}
+                />
             </div>
           </div>
         </div>

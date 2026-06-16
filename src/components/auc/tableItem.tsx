@@ -14,8 +14,16 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { DeleteDialog } from '@components';
 import i18n from '@app/utils/i18n';
+import {Auc} from '@app/types/pyhss';
 
-const AucItem = (props: { row: ReturnType<typeof Object>, single: ReturnType<typeof Boolean>, deleteCallback: ReturnType<typeof any>, openEditCallback: ReturnType<typeof any>, checkboxCallback: any, checked: boolean }) => {
+const AucItem = (props: {
+  row: Auc,
+  single: boolean,
+  deleteCallback: (id: number) => void,
+  openEditCallback: (row: Auc) => void,
+  checkboxCallback?: any,
+  checked: boolean
+}) => {
   const { row, single, deleteCallback, openEditCallback, checkboxCallback = undefined, checked = false } = props;
   const [open, setOpen] = React.useState(single);
 
@@ -35,11 +43,11 @@ const AucItem = (props: { row: ReturnType<typeof Object>, single: ReturnType<typ
         <TableCell>
           <Checkbox
             color="primary"
-            id={row.auc_id}
+            id={String(row.auc_id)}
             checked={checked}
             onClick={checkboxCallback}
             inputProps={{
-              'aria-labelledby': row.auc_id,
+              'aria-labelledby': String(row.auc_id),
             }}
           />
         </TableCell>
@@ -53,7 +61,7 @@ const AucItem = (props: { row: ReturnType<typeof Object>, single: ReturnType<typ
         <TableCell>{(row.esim?i18n.t('generic.yes'):i18n.t('generic.no'))}</TableCell>
         <TableCell>
           <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
-          <DeleteDialog id={row.auc_id} callback={deleteCallback}/>
+          <DeleteDialog id={row.auc_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>
       <TableRow>

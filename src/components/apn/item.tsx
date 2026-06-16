@@ -13,13 +13,21 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import i18n from '@app/utils/i18n';
 import {DeleteDialog, NetworkBandwidthFormatter} from "@components";
+import {Apn, ChargingRule} from '@app/types/pyhss';
 
-const ApnItem = (props: { row: ReturnType<typeof Object>, chargingRules: ReturnType<typeof Object>, deleteCallback: ReturnType<typeof any>, openEditCallback: ReturnType<typeof any> }) => {
+const ApnItem = (props: {
+  row: Apn,
+  chargingRules: ChargingRule[],
+  deleteCallback: (id: number) => void,
+  openEditCallback: (row: Apn) => void
+}) => {
   const { row, chargingRules, deleteCallback, openEditCallback } = props;
   const [open, setOpen] = React.useState(false);
 
   const ipVersion = ['ipv4','ipv6','ipv4+6', 'ipv4 or ipv6'];
-  const rules = chargingRules.filter((a) => row.charging_rule_list.split(",").includes(String(a.charging_rule_id)));
+  const rules = chargingRules.filter((a: ChargingRule) =>
+    (row.charging_rule_list ?? '').split(",").includes(String(a.charging_rule_id))
+  );
 
   return (
     <React.Fragment>
@@ -46,7 +54,7 @@ const ApnItem = (props: { row: ReturnType<typeof Object>, chargingRules: ReturnT
         <TableCell>{row.pgw_address}</TableCell>
         <TableCell>
           <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
-          <DeleteDialog id={row.apn_id} callback={deleteCallback} />
+          <DeleteDialog id={row.apn_id!} callback={deleteCallback} />
         </TableCell>
       </TableRow>
       <TableRow>
@@ -101,7 +109,7 @@ const ApnItem = (props: { row: ReturnType<typeof Object>, chargingRules: ReturnT
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rules.map((chRow) => 
+                  {rules.map((chRow: ChargingRule) => 
                     <TableRow key={chRow.charging_rule_id}>
                       <TableCell>{chRow.rule_name}</TableCell>
                       <TableCell>{chRow.qci}</TableCell>

@@ -9,6 +9,7 @@ import {SaveButtons} from '@components';
 import AucAddItem from './add';
 
 import {AucApi} from '../../services/pyhss';
+import {Auc, FormValue} from '@app/types/pyhss';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -23,9 +24,15 @@ const style = {
 };
 
 
-const AucAddModal = (props: { open: boolean, handleClose: any, data: object, edit: boolean, onError: Function }) => {
+const AucAddModal = (props: {
+  open: boolean,
+  handleClose: () => void,
+  data: Auc,
+  edit: boolean,
+  onError: (error: unknown) => void
+}) => {
   const { open, handleClose, data, edit, onError = () => {} } = props;
-  const [state, setState] = React.useState(data);
+  const [state, setState] = React.useState<Auc>(data);
   const [error, setError] = React.useState(true);
   const [forceKeys, setForceKeys] = React.useState(false);
 
@@ -33,8 +40,8 @@ const AucAddModal = (props: { open: boolean, handleClose: any, data: object, edi
       setState(data);
   }, [data])
 
-  const handleChange = (name:string, value:string) => {
-    setState((prevState) => ({
+  const handleChange = (name:string, value: FormValue) => {
+    setState((prevState: Auc) => ({
         ...prevState,
         [name]: value
     }));
@@ -93,13 +100,13 @@ const AucAddModal = (props: { open: boolean, handleClose: any, data: object, edi
         "misc4": state.misc4
       }
       if (!forceKeys)
-        AucApi.update(data.auc_id, aucSaveTemplate).then((data) => {
+        AucApi.update(data.auc_id!, aucSaveTemplate).then((data) => {
           handleLocalClose();
         }).catch(err => {
           onError(err);
         })
       else
-        AucApi.update(data.auc_id, state).then((data) => {
+        AucApi.update(data.auc_id!, state).then((data) => {
           handleLocalClose();
         }).catch(err => {
           onError(err);

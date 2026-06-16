@@ -2,13 +2,14 @@ import React from 'react';
 import FormHelperText from '@mui/material/FormHelperText';
 import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
+import {FormChangeHandler, FormValue} from '@app/types/pyhss';
 
 const InputField = (props: {
   children: React.ReactNode,
   id: string, 
-  value: string, 
+  value: FormValue,
   label: string, 
-  onChange: ReturnType<typeof Function>,
+  onChange: FormChangeHandler,
   error?: string,
   required?: boolean,
   disabled?: boolean
@@ -33,7 +34,7 @@ const InputField = (props: {
         required={required}
         label={`${label} ${errValue}`}
         onChange={onChangeLocal}
-        value={value}
+        value={value ?? ''}
         name={id}
         aria-describedby={`${id}-helper`}
         InputLabelProps={{ required: false }}

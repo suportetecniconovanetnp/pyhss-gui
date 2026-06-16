@@ -3,8 +3,13 @@ import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import { DeleteDialog, NetworkBandwidthFormatter } from '@components';
+import {ChargingRule} from '@app/types/pyhss';
 
-const ChargingRuleItem = (props: { row: ReturnType<typeof Object>, deleteCallback: ReturnType<typeof any>, openEditCallback: ReturnType<typeof any> }) => {
+const ChargingRuleItem = (props: {
+  row: ChargingRule,
+  deleteCallback: (id: number) => void,
+  openEditCallback: (row: ChargingRule) => void
+}) => {
   const { row, deleteCallback, openEditCallback } = props;
 
   return (
@@ -28,7 +33,7 @@ const ChargingRuleItem = (props: { row: ReturnType<typeof Object>, deleteCallbac
         <TableCell>{row.last_modified}</TableCell>
         <TableCell>
           <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
-          <DeleteDialog id={row.charging_rule_id} callback={deleteCallback}/>
+          <DeleteDialog id={row.charging_rule_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>
     </React.Fragment>

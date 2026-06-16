@@ -26,15 +26,15 @@ const style = {
   p: 4,
 };
 
-const ChargingRuleAddItem = (props: { open: ReturnType<typeof Boolean>, handleClose: ReturnType<typeof any>, data: ReturnType<typeof Object>, edit: ReturnType<typeof Boolean> }) => {
+const ChargingRuleAddItem = (props: { open: boolean, handleClose: () => void, data: any, edit: boolean }) => {
   const { open, handleClose, data, edit } = props;
   const [state, setState] = React.useState(data);
   React.useEffect(() => {
       setState(data);
   }, [data])
 
-  const handleChange = (name: string, value: string) => {
-    setState(prevState => ({
+  const handleChange = (name: string, value: any) => {
+    setState((prevState: any) => ({
         ...prevState,
         [name]: value
     }));
@@ -193,8 +193,8 @@ const ChargingRuleAddItem = (props: { open: ReturnType<typeof Boolean>, handleCl
                   label={i18n.t('inputFields.header.arpPreemptionCapability')}
                   helper={i18n.t('inputFields.desc.arpPreemptionCapability')}
                 >
-                  <MenuItem value={true}>{i18n.t('generic.yes')}</MenuItem>
-                  <MenuItem value={false}>{i18n.t('generic.no')}</MenuItem>
+                  <MenuItem value="true">{i18n.t('generic.yes')}</MenuItem>
+                  <MenuItem value="false">{i18n.t('generic.no')}</MenuItem>
                 </SelectField>
               </Grid>
               <Grid item xs={3}>
@@ -205,8 +205,8 @@ const ChargingRuleAddItem = (props: { open: ReturnType<typeof Boolean>, handleCl
                   label={i18n.t('inputFields.header.arpPreemptionVulnerability')}
                   helper={i18n.t('inputFields.desc.arpPreemptionVulnerability')}
                 >
-                  <MenuItem value={true}>{i18n.t('generic.yes')}</MenuItem>
-                  <MenuItem value={false}>{i18n.t('generic.no')}</MenuItem>
+                  <MenuItem value="true">{i18n.t('generic.yes')}</MenuItem>
+                  <MenuItem value="false">{i18n.t('generic.no')}</MenuItem>
                 </SelectField>
               </Grid>
             </Grid>

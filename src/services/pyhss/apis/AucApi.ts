@@ -1,19 +1,25 @@
 import http from "../http-common";
+import {Auc, ListQueryParams} from '@app/types/pyhss';
 
 class AucApi {
-  getAll() {
-    return http.get("/auc/list");
+  getAll(params: ListQueryParams = {}) {
+    return http.get("/auc/list", {
+      params: {
+        page: params.page ?? 0,
+        page_size: params.pageSize ?? 200
+      }
+    });
   }
 
   get(id: number) {
     return http.get(`/auc/${id}`);
   }
 
-  create(data: object) {
+  create(data: Auc) {
     return http.put("/auc/", data);
   }
 
-  update(id: number, data: object) {
+  update(id: number, data: Partial<Auc>) {
     return http.patch(`/auc/${id}`, data);
   }
 

@@ -15,12 +15,22 @@ import SignalCellularNodataIcon from '@mui/icons-material/SignalCellularNodata';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import { DeleteDialog } from '@components';
 import i18n from '@app/utils/i18n';
+import {ImsSubscriber} from '@app/types/pyhss';
 
-const ImsSubscriberItem = (props: { row: ReturnType<typeof Object>, deleteCallback: ReturnType<typeof any>, openEditCallback: ReturnType<typeof any> }) => {
+type ImsSubscriberRow = ImsSubscriber & {
+  pcscf_timestamp?: string;
+  scscf_timestamp?: string;
+};
+
+const ImsSubscriberItem = (props: {
+  row: ImsSubscriberRow,
+  deleteCallback: (id: number) => void,
+  openEditCallback: (row: ImsSubscriberRow) => void
+}) => {
   const { row, deleteCallback, openEditCallback } = props;
   const [open, setOpen] = React.useState(false);
 
-  const online = ((new Date) - new Date(row.pcscf_timestamp) < 60 * 60 * 1000)
+  const online = Date.now() - new Date(row.pcscf_timestamp ?? '').getTime() < 60 * 60 * 1000;
 
   return (
     <React.Fragment>
@@ -44,7 +54,7 @@ const ImsSubscriberItem = (props: { row: ReturnType<typeof Object>, deleteCallba
         <TableCell>{row.last_modified}</TableCell>
         <TableCell>
           <Button onClick={() => openEditCallback(row)}><i className="fas fa-edit"></i></Button>
-          <DeleteDialog id={row.ims_subscriber_id} callback={deleteCallback}/>
+          <DeleteDialog id={row.ims_subscriber_id!} callback={deleteCallback}/>
         </TableCell>
       </TableRow>
       <TableRow>
