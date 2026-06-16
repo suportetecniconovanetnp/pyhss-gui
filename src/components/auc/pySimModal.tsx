@@ -5,7 +5,6 @@ import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import i18n from '@app/utils/i18n';
-import Highlight from 'react-highlight.js';
 import {InputField, SelectField} from '@components';
 import {ImsSubscriberApi} from "../../services/pyhss";
 import axios from "axios";
@@ -135,7 +134,7 @@ const AucPySimModal = (props: { open: boolean, handleClose: () => void, rows: Au
             </Grid>
             {help && (
             <Grid item xs={12}>
-              <Highlight className="codePre">{`
+              <pre className="codePre"><code>{`
   Options:
     -h, --help            show this help message and exit
     -d DEV, --device=DEV  Serial Device for SIM access [default: /dev/ttyUSB0]
@@ -196,8 +195,7 @@ const AucPySimModal = (props: { open: boolean, handleClose: () => void, rows: Au
     --write-hlr=FILE      Append generated parameters to OpenBSC HLR sqlite3
     --dry-run             Perform a 'dry run', don't actually program the card
     --card_handler=FILE   Use automatic card handling machine
-              `}
-              </Highlight>
+              `}</code></pre>
             </Grid>)}
             <Grid item xs={2}>
               <Button variant="outlined" onClick={()=>onOutput(true)}>Generate Dry run</Button>
@@ -209,9 +207,7 @@ const AucPySimModal = (props: { open: boolean, handleClose: () => void, rows: Au
               <h4>Output</h4>
             </Grid>
             <Grid item xs={12}>
-              <Highlight language="bash" className="codePre">
-                {output.join('\n')}
-              </Highlight>
+              <pre className="codePre"><code>{output.join('\n')}</code></pre>
             </Grid>
           </Grid>
         </Box>
