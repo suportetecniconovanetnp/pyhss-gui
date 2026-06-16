@@ -1,7 +1,8 @@
 @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700');
 
-@import 'admin-lte/plugins/icheck-bootstrap/icheck-bootstrap.min.css';
-@import 'admin-lte/dist/css/adminlte.min.css';
+@import 'admin-lte/dist/css/alt/adminlte.core.min.css';
+@import 'admin-lte/dist/css/alt/adminlte.components.min.css';
+@import 'admin-lte/dist/css/alt/adminlte.pages.min.css';
 
 @import 'react-toastify/dist/ReactToastify.min.css';
 
