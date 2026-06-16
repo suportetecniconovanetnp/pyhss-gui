@@ -1,28 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-import Main from '@modules/main/Main';
-import Login from '@modules/login/Login';
 import { useWindowSize } from '@app/hooks/useWindowSize';
 import { calculateWindowSize } from '@app/utils/helpers';
 import { useDispatch, useSelector } from 'react-redux';
 import { setWindowSize, setDarkMode } from '@app/store/reducers/ui';
-
-import Dashboard from '@pages/Dashboard';
-import Auc from '@pages/Auc';
-import Apn from '@pages/Apn';
-import Subscriber from '@pages/Subscriber';
-import IMSSubscriber from '@pages/IMSSubscriber';
-import Tft from '@pages/Tft';
-import ChargingRule from '@pages/ChargingRule';
-import RoamingNetwork from '@pages/RoamingNetwork';
-import RoamingRule from '@pages/RoamingRule';
-import Eir from  '@pages/Eir';
-
-import AddWizard from '@pages/AddWizard';
 
 import PublicRoute from './routes/PublicRoute';
 import PrivateRoute from './routes/PrivateRoute';
@@ -30,6 +15,20 @@ import { setAuthentication } from './store/reducers/auth';
 import {
   getAuthStatus,
 } from './utils/oidc-providers';
+
+const Main = lazy(() => import('@modules/main/Main'));
+const Login = lazy(() => import('@modules/login/Login'));
+const Dashboard = lazy(() => import('@pages/Dashboard'));
+const Auc = lazy(() => import('@pages/Auc'));
+const Apn = lazy(() => import('@pages/Apn'));
+const Subscriber = lazy(() => import('@pages/Subscriber'));
+const IMSSubscriber = lazy(() => import('@pages/IMSSubscriber'));
+const Tft = lazy(() => import('@pages/Tft'));
+const ChargingRule = lazy(() => import('@pages/ChargingRule'));
+const RoamingNetwork = lazy(() => import('@pages/RoamingNetwork'));
+const RoamingRule = lazy(() => import('@pages/RoamingRule'));
+const Eir = lazy(() => import('@pages/Eir'));
+const AddWizard = lazy(() => import('@pages/AddWizard'));
 
 const darkTheme = createTheme({
   palette: {
@@ -42,6 +41,8 @@ const lightTheme = createTheme({
     mode: 'light',
   },
 });
+
+const RouteLoading = () => <p>Loading</p>;
 
 const App = () => {
   const windowSize = useWindowSize();
@@ -90,26 +91,28 @@ const App = () => {
   <ThemeProvider theme={(darkMode?darkTheme:lightTheme)}>
     <BrowserRouter>
       <CssBaseline />
-      <Routes>
-        <Route path="/login" element={<PublicRoute />}>
-          <Route path="/login" element={<Login />} />
-        </Route>
-        <Route path="/" element={<PrivateRoute />}>
-          <Route path="/" element={<Main />}>
-            <Route path="/apn" element={<Apn />} />
-            <Route path="/auc" element={<Auc />} />
-            <Route path="/subscriber" element={<Subscriber />} />
-            <Route path="/imssubscriber" element={<IMSSubscriber />} />
-            <Route path="/tft" element={<Tft />} />
-            <Route path="/chargingrule" element={<ChargingRule />} />
-	    <Route path="/eir" element={<Eir />} />
-            <Route path="/roamingnetwork" element={<RoamingNetwork />} />
-            <Route path="/roamingrule" element={<RoamingRule />} />
-            <Route path="/addwizard" element={<AddWizard />} />
-            <Route path="/" element={<Dashboard />} />
+      <Suspense fallback={<RouteLoading />}>
+        <Routes>
+          <Route path="/login" element={<PublicRoute />}>
+            <Route path="/login" element={<Login />} />
           </Route>
-        </Route>
-      </Routes>
+          <Route path="/" element={<PrivateRoute />}>
+            <Route path="/" element={<Main />}>
+              <Route path="/apn" element={<Apn />} />
+              <Route path="/auc" element={<Auc />} />
+              <Route path="/subscriber" element={<Subscriber />} />
+              <Route path="/imssubscriber" element={<IMSSubscriber />} />
+              <Route path="/tft" element={<Tft />} />
+              <Route path="/chargingrule" element={<ChargingRule />} />
+              <Route path="/eir" element={<Eir />} />
+              <Route path="/roamingnetwork" element={<RoamingNetwork />} />
+              <Route path="/roamingrule" element={<RoamingRule />} />
+              <Route path="/addwizard" element={<AddWizard />} />
+              <Route path="/" element={<Dashboard />} />
+            </Route>
+          </Route>
+        </Routes>
+      </Suspense>
       <ToastContainer
         autoClose={3000}
         draggable={false}

@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, {useState} from 'react';
-import {ContentHeader, AucItem, AucAddModal, ErrorDialog, AucPySimModal} from '@components';
+import {ContentHeader, AucItem, AucAddModal, ErrorDialog} from '@components';
 import {AucApi} from "../services/pyhss"
 import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
@@ -18,6 +18,8 @@ import TextField from '@mui/material/TextField';
 import { useSearchParams } from "react-router-dom";
 import i18n from '@app/utils/i18n';
 import {Auc as AucModel} from '@app/types/pyhss';
+
+const AucPySimModal = React.lazy(() => import('../components/auc/pySimModal'));
 
 const aucTemplate = {
   "ki": "",
@@ -253,7 +255,11 @@ const Auc = () => {
           open={openAdd}
         />
         <AucAddModal open={openAdd} handleClose={handleAddClose} data={dialogData} edit={editMode} onError={handleError}/>
-        <AucPySimModal open={openPySim} rows={pySimItems} handleClose={handlePySimClose}/>
+        {openPySim && (
+        <React.Suspense fallback={<p>Loading</p>}>
+          <AucPySimModal open={openPySim} rows={pySimItems} handleClose={handlePySimClose}/>
+        </React.Suspense>
+        )}
         <ErrorDialog error={error} />
       </section>
     </div>
