@@ -137,7 +137,7 @@ const RoamingNetwork = () => {
         </div>
         <SpeedDial
           ariaLabel="Add"
-          sx={{ position: 'absolute', bottom: 80, right: 16 }}
+          sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1200 }}
           icon={<SpeedDialIcon />}
           onClick={() => handleAdd()}
           open={openAdd}
