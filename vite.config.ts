@@ -4,7 +4,6 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  mode: 'development',
   plugins: [react()],
   resolve: {
     alias: {
@@ -27,6 +26,12 @@ export default defineConfig({
             return 'react-vendor';
           }
 
+          // Keep Profabric's React wrappers with React to avoid circular
+          // dependencies between admin-vendor and react-vendor in production.
+          if (id.includes('@profabric')) {
+            return 'react-vendor';
+          }
+
           if (id.includes('@mui') || id.includes('@emotion')) {
             return 'mui-vendor';
           }
@@ -39,7 +44,7 @@ export default defineConfig({
             return 'icons-vendor';
           }
 
-          if (id.includes('@profabric') || id.includes('admin-lte')) {
+          if (id.includes('admin-lte')) {
             return 'admin-vendor';
           }
 
