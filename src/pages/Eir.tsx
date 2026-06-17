@@ -14,8 +14,11 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import i18n from '@app/utils/i18n';
+import LoadingPage from '@app/components/LoadingPage';
+import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
+import fetchAllPages from '@app/utils/fetchAllPages';
 import {Eir as EirModel} from '@app/types/pyhss';
-  
+
 const eirTemplate = {
   imei: '',
   imsi: '',
@@ -28,55 +31,35 @@ const Eir = () => {
   const [dialogData, setDialogData] = useState<EirModel>(eirTemplate);
   const [openAdd, setOpenAdd] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [count, setCount] = useState(-1);
+  const [isLoading, setIsLoading] = useState(true);
+  const {
+    search,
+    page,
+    rowsPerPage,
+    filteredItems,
+    paginatedItems,
+    handleSearchChange,
+    handlePageChange,
+    handleRowsPerPageChange
+  } = useTableSearchPagination(eirs);
 
-  const loadPage = React.useCallback((currentPage: number, currentRowsPerPage: number) => {
-    EirApi.getAll({page: currentPage, pageSize: currentRowsPerPage}).then((data) => {
-      const items = data.data as EirModel[];
-      setEIRS(items);
-      setCount(items.length < currentRowsPerPage
-        ? currentPage * currentRowsPerPage + items.length
-        : currentPage * currentRowsPerPage + items.length + 1);
-    });
+  const loadData = React.useCallback(() => {
+    setIsLoading(true);
+    fetchAllPages<EirModel>((params) => EirApi.getAll(params))
+      .then(setEIRS)
+      .finally(() => setIsLoading(false));
   }, []);
 
   React.useEffect(() => {
-    if (search.trim() === '') {
-      loadPage(page, rowsPerPage);
-      return;
-    }
-
-    EirApi.lookupByImei(search.trim()).then((data => {
-      setEIRS([data.data]);
-      setCount(1);
-      setPage(0);
-    })).catch(() => {
-      setEIRS([]);
-      setCount(0);
-      setPage(0);
-    });
-  }, [loadPage, page, rowsPerPage, search]);
+    loadData();
+  }, [loadData]);
 
   const refresh = () => {
-    if (search.trim() === '') {
-      loadPage(page, rowsPerPage);
-      return;
-    }
-
-    EirApi.lookupByImei(search.trim()).then((data => {
-      setEIRS([data.data]);
-      setCount(1);
-    })).catch(() => {
-      setEIRS([]);
-      setCount(0);
-    });
-  }
+    loadData();
+  };
 
   const handleDelete = (id: number) => {
-    EirApi.delete(id).then((data) => {
+    EirApi.delete(id).then(() => {
       refresh();
     })
   }
@@ -96,6 +79,10 @@ const Eir = () => {
     setOpenAdd(true);
   }
 
+  if (isLoading) {
+    return <LoadingPage title="Equipment Identity Register" />;
+  }
+
   return (
     <div>
       <ContentHeader title="Equipment Identity Register" />
@@ -107,7 +94,7 @@ const Eir = () => {
                 fullWidth
                 id="search-field"
                 label={i18n.t('generic.search')}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={handleSearchChange}
                 size="small"
                 value={search}
                 variant="outlined"
@@ -130,7 +117,7 @@ const Eir = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {eirs.map((row) => (
+                      {paginatedItems.map((row) => (
                         <EirItem key={row.eir_id} row={row}  deleteCallback={handleDelete} openEditCallback={openEdit} />
                       ))}
                     </TableBody>
@@ -138,12 +125,9 @@ const Eir = () => {
                 </TableContainer>
                 <TablePagination
                   component="div"
-                  count={count}
-                  onPageChange={(_event, newPage) => setPage(newPage)}
-                  onRowsPerPageChange={(event) => {
-                    setRowsPerPage(Number(event.target.value));
-                    setPage(0);
-                  }}
+                  count={filteredItems.length}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
                   page={page}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[10, 25, 50, 100]}

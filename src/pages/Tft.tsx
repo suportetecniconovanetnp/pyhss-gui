@@ -14,6 +14,8 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import i18n from '@app/utils/i18n';
+import LoadingPage from '@app/components/LoadingPage';
+import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
 import fetchAllPages from '@app/utils/fetchAllPages';
 import {Tft as TftModel} from '@app/types/pyhss';
 
@@ -28,66 +30,35 @@ const Tft = () => {
   const [openAdd, setOpenAdd] = useState(false);
   const [dialogData, setDialogData] = useState<TftModel>(tftTemplate);
   const [editMode, setEditMode] = useState(false);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [count, setCount] = useState(-1);
+  const [isLoading, setIsLoading] = useState(true);
+  const {
+    search,
+    page,
+    rowsPerPage,
+    filteredItems,
+    paginatedItems,
+    handleSearchChange,
+    handlePageChange,
+    handleRowsPerPageChange
+  } = useTableSearchPagination(items);
 
-  const loadPage = React.useCallback((currentPage: number, currentRowsPerPage: number) => {
-    TftApi.getAll({page: currentPage, pageSize: currentRowsPerPage}).then((data => {
-      const nextItems = data.data as TftModel[];
-      setItems(nextItems);
-      setCount(nextItems.length < currentRowsPerPage
-        ? currentPage * currentRowsPerPage + nextItems.length
-        : currentPage * currentRowsPerPage + nextItems.length + 1);
-    }));
+  const loadData = React.useCallback(() => {
+    setIsLoading(true);
+    fetchAllPages<TftModel>((params) => TftApi.getAll(params))
+      .then(setItems)
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const runSearch = React.useCallback((term: string) => {
-    const normalized = term.trim().toLowerCase();
-
-    if (normalized === '') {
-      loadPage(page, rowsPerPage);
-      return;
-    }
-
-    fetchAllPages<TftModel>((params) => TftApi.getAll(params)).then((allItems) => {
-      const filteredItems = allItems.filter((item) =>
-        [
-          item.tft_id,
-          item.tft_group_id,
-          item.tft_string,
-          item.direction
-        ].some((value) => String(value ?? '').toLowerCase().includes(normalized))
-      );
-
-      setItems(filteredItems);
-      setCount(filteredItems.length);
-      setPage(0);
-    });
-  }, [loadPage, page, rowsPerPage]);
-
   React.useEffect(() => {
-    if (search.trim() === '') {
-      loadPage(page, rowsPerPage);
-      return;
-    }
-
-    runSearch(search);
-  }, [loadPage, page, rowsPerPage, runSearch, search]);
+    loadData();
+  }, [loadData]);
 
   const refresh = () => {
-    if (search.trim() === '') {
-      loadPage(page, rowsPerPage);
-      return;
-    }
-
-    runSearch(search);
-  }
+    loadData();
+  };
 
   const handleDelete = (id: number) => {
-    TftApi.delete(id).then((data) => {
-      console.log(id, data);
+    TftApi.delete(id).then(() => {
       refresh();
     })
   }
@@ -107,6 +78,10 @@ const Tft = () => {
     setOpenAdd(true);
   }
 
+  if (isLoading) {
+    return <LoadingPage title="Traffic Flow Template" />;
+  }
+
   return (
     <div>
       <ContentHeader title="Traffic Flow Template" />
@@ -118,7 +93,7 @@ const Tft = () => {
                 fullWidth
                 id="search-field"
                 label={i18n.t('generic.search')}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={handleSearchChange}
                 size="small"
                 value={search}
                 variant="outlined"
@@ -139,7 +114,7 @@ const Tft = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {items.map((row) => (
+                      {paginatedItems.map((row) => (
                         <TftItem key={row.tft_id} row={row} deleteCallback={handleDelete} openEditCallback={openEdit} />
                       ))}
                     </TableBody>
@@ -147,12 +122,9 @@ const Tft = () => {
                 </TableContainer>
                 <TablePagination
                   component="div"
-                  count={count}
-                  onPageChange={(_event, newPage) => setPage(newPage)}
-                  onRowsPerPageChange={(event) => {
-                    setRowsPerPage(Number(event.target.value));
-                    setPage(0);
-                  }}
+                  count={filteredItems.length}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
                   page={page}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[10, 25, 50, 100]}

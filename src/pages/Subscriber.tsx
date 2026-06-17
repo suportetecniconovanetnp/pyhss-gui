@@ -14,6 +14,9 @@ import TextField from '@mui/material/TextField';
 import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
 import i18n from '@app/utils/i18n';
+import LoadingPage from '@app/components/LoadingPage';
+import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
+import fetchAllPages from '@app/utils/fetchAllPages';
 import {Subscriber as SubscriberModel} from '@app/types/pyhss';
 
 const subscriberTemplate = {
@@ -37,64 +40,35 @@ const Subscriber = () => {
   const [openAdd, setOpenAdd] = React.useState(false);
   const [editMode, setEditMode] = React.useState(false);
   const [subscribers, setSubscribers] = React.useState<SubscriberModel[]>([]);
-  const [search, setSearch] = React.useState('');
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const [count, setCount] = React.useState(-1);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const {
+    search,
+    page,
+    rowsPerPage,
+    filteredItems,
+    paginatedItems,
+    handleSearchChange,
+    handlePageChange,
+    handleRowsPerPageChange
+  } = useTableSearchPagination(subscribers);
 
-  const loadPage = React.useCallback((currentPage: number, currentRowsPerPage: number) => {
-    SubscriberApi.getAll({page: currentPage, pageSize: currentRowsPerPage}).then((data) => {
-      const items = data.data as SubscriberModel[];
-      setSubscribers(items);
-      setCount(items.length < currentRowsPerPage
-        ? currentPage * currentRowsPerPage + items.length
-        : currentPage * currentRowsPerPage + items.length + 1);
-    });
+  const loadData = React.useCallback(() => {
+    setIsLoading(true);
+    fetchAllPages<SubscriberModel>((params) => SubscriberApi.getAll(params))
+      .then(setSubscribers)
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const runSearch = React.useCallback((term: string) => {
-    const normalized = term.trim();
-
-    if (normalized === '') {
-      loadPage(page, rowsPerPage);
-      return;
-    }
-
-    Promise.allSettled([
-      SubscriberApi.findByImsi(normalized),
-      SubscriberApi.findByMsisdn(normalized)
-    ]).then((results) => {
-      const items = results
-        .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
-        .map((result) => result.value.data as SubscriberModel)
-        .filter((item, index, array) => array.findIndex((candidate) => candidate.subscriber_id === item.subscriber_id) === index);
-      setSubscribers(items);
-      setCount(items.length);
-      setPage(0);
-    });
-  }, [loadPage, page, rowsPerPage]);
-
   React.useEffect(() => {
-    if (search.trim() === '') {
-      loadPage(page, rowsPerPage);
-      return;
-    }
-
-    runSearch(search);
-  }, [loadPage, page, rowsPerPage, runSearch, search]);
+    loadData();
+  }, [loadData]);
 
   const refresh = () => {
-    if (search.trim() === '') {
-      loadPage(page, rowsPerPage);
-      return;
-    }
-
-    runSearch(search);
-  }
+    loadData();
+  };
 
   const handleDelete = (id: number) => {
-    SubscriberApi.delete(id).then((data) => {
-      console.log(id, data);
+    SubscriberApi.delete(id).then(() => {
       refresh();
     })
   }
@@ -114,6 +88,10 @@ const Subscriber = () => {
     setOpenAdd(true);
   }
 
+  if (isLoading) {
+    return <LoadingPage title="Subscribers" />;
+  }
+
   return (
     <div>
       <ContentHeader title="Subscribers" />
@@ -125,7 +103,7 @@ const Subscriber = () => {
                 fullWidth
                 id="search-field"
                 label={i18n.t('generic.search')}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={handleSearchChange}
                 size="small"
                 value={search}
                 variant="outlined"
@@ -153,7 +131,7 @@ const Subscriber = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {subscribers.map((row) => (
+                      {paginatedItems.map((row) => (
                         <SubscriberItem key={row.subscriber_id} row={row} deleteCallback={handleDelete} openEditCallback={openEdit}/>
                       ))}
                     </TableBody>
@@ -161,12 +139,9 @@ const Subscriber = () => {
                 </TableContainer>
                 <TablePagination
                   component="div"
-                  count={count}
-                  onPageChange={(_event, newPage) => setPage(newPage)}
-                  onRowsPerPageChange={(event) => {
-                    setRowsPerPage(Number(event.target.value));
-                    setPage(0);
-                  }}
+                  count={filteredItems.length}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
                   page={page}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[10, 25, 50, 100]}

@@ -17,6 +17,9 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import { useSearchParams } from "react-router-dom";
 import i18n from '@app/utils/i18n';
+import LoadingPage from '@app/components/LoadingPage';
+import useTableSearchPagination from '@app/hooks/useTableSearchPagination';
+import fetchAllPages from '@app/utils/fetchAllPages';
 import {Auc as AucModel} from '@app/types/pyhss';
 
 const AucPySimModal = React.lazy(() => import('../components/auc/pySimModal'));
@@ -56,83 +59,47 @@ const Auc = () => {
   const [error, setError] = useState('');
   const [selected, setSelected] = React.useState<readonly number[]>([]);
   const [pySimItems, setPySimItems] = useState<AucModel[]>([]);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [count, setCount] = useState(-1);
+  const [isLoading, setIsLoading] = useState(true);
 
   const aucSearch = searchParams.get('auc');
+  const {
+    search,
+    page,
+    rowsPerPage,
+    filteredItems,
+    paginatedItems,
+    handleSearchChange,
+    handlePageChange,
+    handleRowsPerPageChange
+  } = useTableSearchPagination(items);
 
-  const loadPage = React.useCallback((currentPage: number, currentRowsPerPage: number) => {
-    AucApi.getAll({page: currentPage, pageSize: currentRowsPerPage}).then((data) => {
-      const nextItems = data.data as AucModel[];
-      setItems(nextItems);
-      setCount(nextItems.length < currentRowsPerPage
-        ? currentPage * currentRowsPerPage + nextItems.length
-        : currentPage * currentRowsPerPage + nextItems.length + 1);
-    });
-  }, []);
-
-  const runSearch = React.useCallback((term: string) => {
-    const normalized = term.trim();
-
-    if (normalized === '') {
-      loadPage(page, rowsPerPage);
+  const loadData = React.useCallback(() => {
+    setIsLoading(true);
+    if (aucSearch) {
+      AucApi.get(Number(aucSearch)).then((data) => {
+        setItems([data.data]);
+      }).finally(() => setIsLoading(false));
       return;
     }
 
-    Promise.allSettled([
-      AucApi.findByImsi(normalized),
-      AucApi.findByIccid(normalized)
-    ]).then((results) => {
-      const nextItems = results
-        .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
-        .map((result) => result.value.data as AucModel)
-        .filter((item, index, array) => array.findIndex((candidate) => candidate.auc_id === item.auc_id) === index);
-      setItems(nextItems);
-      setCount(nextItems.length);
-      setPage(0);
-    });
-  }, [loadPage, page, rowsPerPage]);
+    fetchAllPages<AucModel>((params) => AucApi.getAll(params))
+      .then(setItems)
+      .finally(() => setIsLoading(false));
+  }, [aucSearch]);
 
   React.useEffect(() => {
-    if (aucSearch) {
-      AucApi.get(Number(aucSearch)).then((data => {
-        setItems([data.data])
-        setCount(1);
-      }));
-      return;
-    }
-
-    if (search.trim() === '') {
-      loadPage(page, rowsPerPage);
-      return;
-    }
-
-    runSearch(search);
-  }, [aucSearch, loadPage, page, rowsPerPage, runSearch, search]);
+    loadData();
+  }, [loadData]);
 
   const refresh = () => {
-    if (aucSearch) {
-      AucApi.get(Number(aucSearch)).then((data => {
-        setItems([data.data])
-      }));
-    } else {
-      if (search.trim() === '') {
-        loadPage(page, rowsPerPage);
-      } else {
-        runSearch(search);
-      }
-    }
-  }
+    loadData();
+  };
 
   const handleDelete = (id: number) => {
-    AucApi.delete(id).then((data) => {
-      console.log(id, data);
+    AucApi.delete(id).then(() => {
       refresh();
     }).catch((e)=> {
-      console.log(e);
-      setError(e);
+      setError(String(e));
     })
   }
 
@@ -141,7 +108,6 @@ const Auc = () => {
     setOpenAdd(true);
   }
   const handleAddClose = () => {
-    console.log('Closing add');
     setDialogData(aucTemplate);
     setOpenAdd(false);
     refresh();
@@ -163,6 +129,8 @@ const Auc = () => {
     setOpenPySim(true);
   }
 
+  const displayedItems = aucSearch ? items : paginatedItems;
+
   const checkboxCallback = (i: React.MouseEvent<HTMLInputElement>) => {
     const id = Number(i.currentTarget.id);
     const selectedIndex = selected.indexOf(id);
@@ -181,10 +149,14 @@ const Auc = () => {
       );
     }
     setSelected(newSelected);
-    setPySimItems(items.filter((a) => newSelected.indexOf(a.auc_id!) !== -1))
+    setPySimItems(displayedItems.filter((a) => newSelected.indexOf(a.auc_id!) !== -1))
   };
 
-  const isChecked = (id: number) => selected.indexOf(id) !== -1; 
+  const isChecked = (id: number) => selected.indexOf(id) !== -1;
+
+  if (isLoading) {
+    return <LoadingPage title={(aucSearch?'AUC':'Authentication Center')} />;
+  }
     
   return (
     <div>
@@ -198,7 +170,7 @@ const Auc = () => {
                 fullWidth
                 id="search-field"
                 label={i18n.t('generic.search')}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={handleSearchChange}
                 size="small"
                 value={search}
                 variant="outlined"
@@ -224,7 +196,7 @@ const Auc = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {items.map((row) => (
+                      {displayedItems.map((row) => (
                         <AucItem checked={isChecked(row.auc_id!)} checkboxCallback={checkboxCallback} key={row.auc_id} row={row} single={(aucSearch?true:false)} deleteCallback={handleDelete} openEditCallback={openEdit}/>
                       ))}
                     </TableBody>
@@ -233,12 +205,9 @@ const Auc = () => {
                 {!aucSearch && (
                 <TablePagination
                   component="div"
-                  count={count}
-                  onPageChange={(_event, newPage) => setPage(newPage)}
-                  onRowsPerPageChange={(event) => {
-                    setRowsPerPage(Number(event.target.value));
-                    setPage(0);
-                  }}
+                  count={filteredItems.length}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
                   page={page}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[10, 25, 50, 100]}
