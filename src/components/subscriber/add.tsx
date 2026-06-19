@@ -7,6 +7,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import i18n from '@app/utils/i18n';
 import {NetworkBandwidthFormatter, InputField, SelectField} from '@components';
 import {AucApi, ApnApi} from '../../services/pyhss';
+import fetchAllPages from '@app/utils/fetchAllPages';
 import {Apn, Auc, ErrorChangeHandler, FormChangeHandler, Subscriber} from '@app/types/pyhss';
 
 const SubscriberAddItem = (props: {
@@ -21,6 +22,7 @@ edit?: boolean
   const [apn, setApn] = React.useState<Apn[]>([]);
   const [aucLoading, setAucLoading] = React.useState(true);
   const [apnLoading, setApnLoading] = React.useState(true);
+  const [aucInputValue, setAucInputValue] = React.useState(state.imsi ?? '');
   const [errors, setErrors ] = React.useState({
     'imsi':'',
     'msisdn':'',
@@ -39,15 +41,29 @@ edit?: boolean
     onValidate('ue_ambr_ul', state.ue_ambr_ul)
     onValidate('ue_ambr_dl', state.ue_ambr_dl)
     onValidate('roaming_rule_list', state.roaming_rule_list)
-    AucApi.getAll().then((data => {
-      setAuc(data.data);
-      setAucLoading(false);
-    }));
-    ApnApi.getAll().then((data => {
-      setApn(data.data);
-      setApnLoading(false);
-    }));
   }, [state]);
+
+  React.useEffect(() => {
+    setAucInputValue(state.imsi ?? '');
+  }, [state.imsi]);
+
+  React.useEffect(() => {
+    fetchAllPages<Auc>((params) => AucApi.getAll(params))
+      .then((items) => {
+        setAuc(items);
+      })
+      .finally(() => {
+        setAucLoading(false);
+      });
+
+    fetchAllPages<Apn>((params) => ApnApi.getAll(params))
+      .then((items) => {
+        setApn(items);
+      })
+      .finally(() => {
+        setApnLoading(false);
+      });
+  }, []);
 
   const setError = (name: string,value: string) => {
     setErrors(prevState => ({
@@ -112,9 +128,45 @@ edit?: boolean
       return;
     }
 
+    setAucInputValue(aucItem.imsi);
     onChange('imsi', aucItem.imsi);
     onChange('auc_id', aucItem.auc_id);
     onValidate('imsi', aucItem.imsi);
+  }
+
+  const selectAucByImsi = async (imsi: string) => {
+    const normalizedImsi = imsi.trim();
+
+    if (normalizedImsi === '') {
+      onChange('imsi', '');
+      onChange('auc_id', null);
+      onValidate('imsi', '');
+      return;
+    }
+
+    const localMatch = auc.find((item: Auc) => item.imsi === normalizedImsi);
+    if (localMatch) {
+      onChangeAuc(localMatch);
+      return;
+    }
+
+    try {
+      const response = await AucApi.findByImsi(normalizedImsi);
+      const remoteMatch = response.data as Auc;
+
+      setAuc((prevState) => (
+        prevState.some((item) => item.auc_id === remoteMatch.auc_id)
+          ? prevState
+          : [...prevState, remoteMatch]
+      ));
+      onChangeAuc(remoteMatch);
+    } catch (_error) {
+      onChange('imsi', normalizedImsi);
+      onChange('auc_id', null);
+      onValidate('imsi', normalizedImsi);
+      setError('imsi', 'IMSI not found');
+      onError(true);
+    }
   }
 
   const onChangeDefaultApn = (apnItem?: Apn) => {
@@ -142,16 +194,32 @@ edit?: boolean
           <Grid container rowSpacing={1} spacing={1}>
             <Grid item xs={4}>
               <Autocomplete
+                freeSolo
                 loading={aucLoading}
                 onChange={(_event, value) => {
-                  if (value) {
+                  if (typeof value === 'string') {
+                    void selectAucByImsi(value);
+                  } else if (value) {
                     onChangeAuc(auc.find((a: Auc) => a.imsi === value));
                   }
                 }}
+                onInputChange={(_event, value) => {
+                  setAucInputValue(value);
+                }}
+                inputValue={aucInputValue}
                 value={(auc.find((a: Auc) => a.auc_id === state.auc_id) || {'imsi':''}).imsi}
                 disabled={wizard || edit}
                 options={auc.map((option: Auc) => option.imsi)}
-                renderInput={(params) => <TextField {...params} label={`IMSI ${errors.imsi}`} error={errors.imsi!==''} />}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={`IMSI ${errors.imsi}`}
+                    error={errors.imsi!==''}
+                    onBlur={() => {
+                      void selectAucByImsi(aucInputValue);
+                    }}
+                  />
+                )}
               />
             </Grid>
             <Grid item xs={3}>
