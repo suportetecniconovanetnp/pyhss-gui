@@ -174,7 +174,7 @@ edit?: boolean
       return;
     }
 
-    onChangeLocal('default_apn', String(apnItem.apn_id))
+    onChangeLocal('default_apn', apnItem.apn_id)
     if (state.apn_list === '')
       onChange('apn_list', '' + apnItem.apn_id);
     else
@@ -285,7 +285,7 @@ edit?: boolean
                     onChangeDefaultApn(apn.find((a: Apn) => a.apn === value));
                   }
                 }}
-                value={(apn.find((a: Apn) => a.apn_id === state.default_apn) || {'apn':''}).apn}
+                value={(apn.find((a: Apn) => String(a.apn_id) === String(state.default_apn)) || {'apn':''}).apn}
                 options={apn.map((option: Apn) => option.apn)}
                 renderInput={(params) => <TextField {...params} label={`${i18n.t('inputFields.header.defaultAPN')} ${errors.default_apn}`} error={errors.default_apn!==''} />}
               />

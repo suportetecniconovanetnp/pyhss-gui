@@ -4,12 +4,13 @@ import {InputField} from '@components';
 import Grid from '@mui/material/Grid';
 
 import i18n from '@app/utils/i18n';
+import {ErrorChangeHandler, FormChangeHandler, ImsSubscriber} from '@app/types/pyhss';
 
 const ImsSubscriberAddItem = (props: {
-  onChange: any,
-  state: any,
+  onChange: FormChangeHandler,
+  state: ImsSubscriber,
   wizard?: boolean,
-  onError?: Function
+  onError?: ErrorChangeHandler
 }) => {
 
   const {
@@ -19,50 +20,57 @@ const ImsSubscriberAddItem = (props: {
     onError=()=>{},
   } = props;
 
-  const [errors, setErrors ] = React.useState({'imsi':'','msisdn':'','msisdn_list':'','ifc_path':'','sh_profile':''})
+  const [errors, setErrors ] = React.useState({
+    'imsi':'',
+    'msisdn':'',
+    'msisdn_list':'',
+    'ifc_path':'',
+    'sh_profile':''
+  })
 
   React.useEffect(() => {
-    onValidate('imsi', state.imsi);
-    onValidate('msisdn', state.msisdn);
-    onValidate('msisdn_list', state.msisdn_list);
-  }, []);
+    const nextErrors = {
+      imsi: validateField('imsi', state.imsi),
+      msisdn: validateField('msisdn', state.msisdn),
+      msisdn_list: validateField('msisdn_list', state.msisdn_list),
+      ifc_path: validateField('ifc_path', state.ifc_path),
+      sh_profile: validateField('sh_profile', state.sh_profile)
+    };
 
-  const setError = (name: string,value: string) => {
-    setErrors(prevState => ({
-        ...prevState,
-        [name]: value
-    }));
-  }
+    setErrors(nextErrors);
+    onError(Object.values(nextErrors).some((value) => value !== ''));
+  }, [state, onError]);
 
-  const onValidate = (field: string, value: string) => {
-   let error = ""
-   if (field==='imsi' && value === '')
-     error = i18n.t('validator.required');
-   else if (field==='imsi' && !/^\d*$/.test(value))
-     error = i18n.t('validator.onlyNumbers');
-   else if (field==='imsi' && value.length < 15)
-     error = i18n.t('validator.toShort');
+  const validateField = (field: string, value: string) => {
+    let error = '';
 
-   if (field==='msisdn' && value === '')
-     error = i18n.t('validator.required');
-   else if (field==='msisdn' && !/^\d*$/.test(value))
-     error = i18n.t('validator.onlyNumbers');
+    if (field==='imsi' && value === '')
+      error = i18n.t('validator.required');
+    else if (field==='imsi' && !/^\d*$/.test(value))
+      error = i18n.t('validator.onlyNumbers');
+    else if (field==='imsi' && value.length < 15)
+      error = i18n.t('validator.toShort');
 
-   if (field==='msisdn_list' && value === '')
-     error = i18n.t('validator.required');
-   else if (field==='msisdn_list' && !/^[0-8]*(,[0-8]*)*$/.test(value))
-     error = i18n.t('validator.onlyCSV'); 
+    if (field==='msisdn' && value === '')
+      error = i18n.t('validator.required');
+    else if (field==='msisdn' && !/^\d*$/.test(value))
+      error = i18n.t('validator.onlyNumbers');
 
-   setError(field, error);
+    if (field==='msisdn_list' && value === '')
+      error = i18n.t('validator.required');
+    else if (field==='msisdn_list' && !/^[0-9]*(,[0-9]*)*$/.test(value))
+      error = i18n.t('validator.onlyCSV');
 
-   if (error!=='' || Object.values(errors).filter((a)=>a!=='').length > 0)
-     onError(true);
-   else
-     onError(false);
-  }
+    if (field==='ifc_path' && value === '')
+      error = i18n.t('validator.required');
+
+    if (field==='sh_profile' && value === '')
+      error = i18n.t('validator.required');
+
+    return error;
+  };
 
   const onChangeLocal = (name: string, value: string) => {
-    onValidate(name, value);
     onChange(name, value);
   }
 
